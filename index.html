@@ -1,0 +1,1734 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BuzzCode — Coding Contest Buzzer</title>
+<link href="https://fonts.googleapis.com/css2?family=Bangers&family=Space+Mono:wght@400;700&family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+  /* ══════════════════════════════════════
+     CSS VARIABLES & RESET
+  ══════════════════════════════════════ */
+  :root {
+    --bg: #0a0a0f;
+    --surface: #13131f;
+    --surface2: #1c1c2e;
+    --border: #2a2a45;
+    --accent: #ff3cac;
+    --accent2: #7b2fff;
+    --accent3: #00f5ff;
+    --accent4: #ffbe0b;
+    --text: #f0f0ff;
+    --text-muted: #8888aa;
+    --radius: 16px;
+    --font-display: 'Bangers', cursive;
+    --font-mono: 'Space Mono', monospace;
+    --font-body: 'Outfit', sans-serif;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--font-body);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Noise overlay */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none; z-index: 9999; opacity: 0.4;
+  }
+
+  /* ── SCREENS ── */
+  .screen { display: none; min-height: 100vh; }
+  .screen.active { display: flex; }
+
+  /* ══════════════════════════════════════
+     LANDING
+  ══════════════════════════════════════ */
+  #landing {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 48px;
+    padding: 40px 20px;
+    background: radial-gradient(ellipse 80% 60% at 50% 0%, #2a004466, transparent 70%),
+                radial-gradient(ellipse 60% 40% at 80% 80%, #00337766, transparent 60%);
+  }
+
+  .logo-title { text-align: center; }
+  .logo-title h1 {
+    font-family: var(--font-display);
+    font-size: clamp(56px, 10vw, 120px);
+    letter-spacing: 4px;
+    line-height: 1;
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 40%, var(--accent3) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(0 0 40px #ff3cac66);
+  }
+  .logo-title p {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--text-muted);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-top: 8px;
+  }
+
+  .role-cards { display: flex; gap: 24px; flex-wrap: wrap; justify-content: center; }
+
+  .role-card {
+    background: var(--surface);
+    border: 2px solid var(--border);
+    border-radius: 24px;
+    padding: 40px 32px;
+    width: 280px;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+    position: relative;
+    overflow: hidden;
+  }
+  .role-card::before {
+    content: '';
+    position: absolute; inset: 0;
+    opacity: 0;
+    transition: opacity 0.3s;
+    border-radius: 22px;
+  }
+  .role-card.host::before   { background: radial-gradient(circle at 50% 0%, #ff3cac22, transparent 70%); }
+  .role-card.participant::before { background: radial-gradient(circle at 50% 0%, #7b2fff22, transparent 70%); }
+  .role-card:hover { transform: translateY(-8px) scale(1.02); border-color: var(--accent); }
+  .role-card:hover::before { opacity: 1; }
+  .role-card .icon { font-size: 48px; margin-bottom: 16px; display: block; }
+  .role-card h2 { font-size: 24px; font-weight: 800; margin-bottom: 8px; }
+  .role-card p { font-size: 14px; color: var(--text-muted); line-height: 1.6; }
+  .role-card.host h2 { color: var(--accent); }
+  .role-card.participant h2 { color: var(--accent2); }
+
+  /* ══════════════════════════════════════
+     MODALS
+  ══════════════════════════════════════ */
+  .modal-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: #000000cc;
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    backdrop-filter: blur(8px);
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--surface);
+    border: 2px solid var(--border);
+    border-radius: 24px;
+    padding: 40px;
+    width: 100%; max-width: 560px;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+  .modal h2 { font-size: 28px; font-weight: 800; margin-bottom: 8px; color: var(--accent); }
+  .modal p.subtitle { color: var(--text-muted); font-size: 14px; margin-bottom: 28px; }
+
+  .field { margin-bottom: 20px; }
+  .field label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+  }
+  .field input, .field textarea {
+    width: 100%;
+    background: var(--surface2);
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 16px;
+    padding: 14px 18px;
+    outline: none;
+    transition: border-color 0.2s;
+    resize: vertical;
+  }
+  .field textarea { min-height: 160px; font-family: var(--font-mono); font-size: 13px; }
+  .field input:focus, .field textarea:focus { border-color: var(--accent); }
+  .field .hint { margin-top: 6px; font-size: 12px; color: var(--text-muted); }
+
+  /* ── Question entry row ── */
+  .question-entry-row {
+    display: flex;
+    gap: 10px;
+    align-items: stretch;
+  }
+  .question-entry-row input {
+    flex: 1;
+    min-width: 0;
+  }
+  .btn-add-q {
+    flex-shrink: 0;
+    width: 48px; height: 52px;
+    background: linear-gradient(135deg, var(--accent2), var(--accent));
+    border: none; border-radius: 12px;
+    color: white; font-size: 24px; font-weight: 700;
+    cursor: pointer; transition: all 0.2s;
+    display: flex; align-items: center; justify-content: center;
+    line-height: 1;
+  }
+  .btn-add-q:hover { transform: scale(1.08); box-shadow: 0 4px 16px #7b2fff55; }
+  .btn-add-q:active { transform: scale(0.96); }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 16px 32px;
+    border-radius: 12px;
+    font-family: var(--font-body);
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s;
+    letter-spacing: 0.5px;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: white;
+    box-shadow: 0 4px 24px #ff3cac44;
+    width: 100%;
+  }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 32px #ff3cac66; }
+  .btn-secondary {
+    background: var(--surface2);
+    color: var(--text-muted);
+    border: 2px solid var(--border);
+    width: 100%;
+    margin-top: 12px;
+  }
+  .btn-secondary:hover { border-color: var(--accent2); color: var(--text); }
+
+  /* ══════════════════════════════════════
+     HOST SCREEN
+  ══════════════════════════════════════ */
+  #host { display: none; flex-direction: row; height: 100vh; }
+  #host.active { display: flex; }
+
+  .host-sidebar {
+    width: 280px; flex-shrink: 0;
+    background: var(--surface);
+    border-right: 2px solid var(--border);
+    display: flex; flex-direction: column; overflow: hidden;
+  }
+  .sidebar-header { padding: 24px 20px 16px; border-bottom: 1px solid var(--border); }
+  .sidebar-header .room-code {
+    font-family: var(--font-display);
+    font-size: 32px; letter-spacing: 4px;
+    color: var(--accent3); line-height: 1;
+  }
+  .sidebar-header .room-label {
+    font-size: 11px; color: var(--text-muted);
+    letter-spacing: 2px; text-transform: uppercase; margin-top: 4px;
+  }
+  .sidebar-participants-title {
+    padding: 16px 20px 8px;
+    font-size: 11px; letter-spacing: 2px; text-transform: uppercase;
+    color: var(--text-muted); font-weight: 600;
+  }
+  .participant-list { flex: 1; overflow-y: auto; padding: 0 12px 12px; }
+  .participant-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 12px; border-radius: 12px; margin-bottom: 6px;
+    background: var(--surface2); transition: background 0.2s;
+    animation: slideIn 0.3s ease;
+  }
+  .participant-item.buzzer { background: #ff3cac22; border: 1px solid var(--accent); }
+
+  /* Score badge in sidebar */
+  .participant-score {
+    font-family: var(--font-mono);
+    font-size: 12px; font-weight: 700;
+    color: var(--accent4);
+    background: #ffbe0b22;
+    border: 1px solid #ffbe0b44;
+    border-radius: 6px;
+    padding: 2px 7px;
+    min-width: 28px;
+    text-align: center;
+  }
+
+  @keyframes slideIn {
+    from { transform: translateX(-20px); opacity: 0; }
+    to   { transform: translateX(0);     opacity: 1; }
+  }
+
+  .avatar {
+    width: 36px; height: 36px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; flex-shrink: 0; font-weight: 700;
+    border: 2px solid rgba(255,255,255,0.1);
+  }
+  .participant-name { font-size: 14px; font-weight: 600; flex: 1; }
+  .participant-status {
+    font-size: 10px; padding: 3px 8px; border-radius: 20px;
+    font-weight: 600; letter-spacing: 1px; text-transform: uppercase;
+  }
+  .status-online { background: #00f5ff22; color: var(--accent3); }
+  .status-buzzer { background: #ff3cac44; color: var(--accent); }
+
+  .sidebar-footer {
+    padding: 16px; border-top: 1px solid var(--border);
+    display: flex; flex-direction: column; gap: 8px;
+  }
+
+  .host-main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  .host-topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 32px; border-bottom: 1px solid var(--border);
+    background: var(--surface); gap: 16px;
+  }
+  .question-counter { font-family: var(--font-mono); font-size: 14px; color: var(--text-muted); }
+  .q-counter-num { color: var(--accent3); font-weight: 700; font-size: 18px; }
+  .host-actions { display: flex; gap: 12px; align-items: center; }
+
+  .btn-action {
+    padding: 10px 24px; border-radius: 10px; border: none;
+    font-family: var(--font-body); font-size: 14px; font-weight: 700;
+    cursor: pointer; transition: all 0.2s; letter-spacing: 0.5px;
+  }
+  .btn-next {
+    background: linear-gradient(135deg, var(--accent2), var(--accent));
+    color: white; box-shadow: 0 2px 16px #7b2fff44;
+  }
+  .btn-next:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 4px 24px #7b2fff66; }
+  .btn-next:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn-reset { background: var(--surface2); color: var(--accent3); border: 2px solid var(--accent3); }
+  .btn-reset:hover { background: #00f5ff11; }
+  .btn-award { background: #ffbe0b22; color: var(--accent4); border: 2px solid #ffbe0b55; }
+  .btn-award:hover { background: #ffbe0b33; }
+
+  .host-question-area {
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 60px 80px; position: relative; overflow: hidden;
+  }
+  .host-question-area::before {
+    content: ''; position: absolute; inset: 0;
+    background: radial-gradient(ellipse 60% 40% at 50% 50%, #7b2fff11, transparent);
+    pointer-events: none;
+  }
+  .q-number-badge {
+    font-family: var(--font-display); font-size: 18px;
+    letter-spacing: 3px; color: var(--accent2); margin-bottom: 20px; opacity: 0.8;
+  }
+  .question-text {
+    font-size: clamp(24px, 3vw, 42px); font-weight: 800;
+    text-align: center; line-height: 1.4; max-width: 900px;
+    z-index: 1; animation: fadeUp 0.5s ease;
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .no-question { text-align: center; color: var(--text-muted); }
+  .no-question .big-icon { font-size: 80px; margin-bottom: 24px; display: block; }
+  .no-question h2 { font-size: 28px; font-weight: 800; margin-bottom: 8px; }
+  .no-question p { font-size: 16px; }
+
+  /* Active round indicator */
+  .round-active-badge {
+    display: none;
+    position: absolute; top: 20px; right: 20px;
+    background: #ff3cac22; border: 1px solid var(--accent);
+    border-radius: 8px; padding: 6px 14px;
+    font-family: var(--font-mono); font-size: 11px;
+    color: var(--accent); letter-spacing: 2px; text-transform: uppercase;
+    animation: livePulse 1.5s ease-in-out infinite;
+  }
+  .round-active-badge.visible { display: block; }
+
+  .winner-banner {
+    display: none;
+    position: absolute; bottom: 40px; left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 20px; padding: 20px 40px;
+    text-align: center; box-shadow: 0 8px 48px #ff3cac55;
+    animation: popIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    z-index: 10; min-width: 320px;
+  }
+  .winner-banner.visible { display: block; }
+  @keyframes popIn {
+    from { transform: translateX(-50%) scale(0.5); opacity: 0; }
+    to   { transform: translateX(-50%) scale(1);   opacity: 1; }
+  }
+  .winner-banner .buzzed-label {
+    font-family: var(--font-mono); font-size: 11px;
+    letter-spacing: 3px; text-transform: uppercase;
+    opacity: 0.8; margin-bottom: 4px;
+  }
+  .winner-banner .winner-name {
+    font-family: var(--font-display); font-size: 42px;
+    letter-spacing: 2px; line-height: 1;
+  }
+
+  /* Flash overlay */
+  .flash-overlay {
+    position: fixed; inset: 0; z-index: 9998;
+    pointer-events: none; opacity: 0;
+    background: var(--accent); transition: opacity 0.05s;
+  }
+  .flash-overlay.flashing { animation: flash 0.6s ease-out forwards; }
+  @keyframes flash {
+    0%   { opacity: 0.7; }
+    100% { opacity: 0; }
+  }
+
+  /* ══════════════════════════════════════
+     PARTICIPANT SCREEN
+  ══════════════════════════════════════ */
+  #participant {
+    flex-direction: column; align-items: center;
+    justify-content: space-between; min-height: 100vh;
+    overflow: hidden; position: relative;
+  }
+  .participant-header {
+    width: 100%; display: flex; align-items: center;
+    justify-content: space-between; padding: 20px 24px;
+    background: var(--surface); border-bottom: 1px solid var(--border); flex-shrink: 0;
+  }
+  .participant-info { display: flex; align-items: center; gap: 12px; }
+  .my-avatar {
+    width: 40px; height: 40px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; font-weight: 700; border: 2px solid rgba(255,255,255,0.2);
+  }
+  .my-name { font-weight: 700; font-size: 16px; }
+  .room-badge {
+    font-family: var(--font-mono); font-size: 12px;
+    color: var(--accent3); background: #00f5ff11;
+    border: 1px solid var(--accent3);
+    padding: 6px 14px; border-radius: 8px; letter-spacing: 2px;
+  }
+
+  .participant-question-area {
+    flex: 1; width: 100%;
+    display: flex; align-items: center; justify-content: center;
+    padding: 40px 24px; text-align: center; overflow-y: auto;
+  }
+  .participant-question-text {
+    font-size: clamp(18px, 4vw, 32px); font-weight: 700;
+    line-height: 1.5; max-width: 600px; animation: fadeUp 0.4s ease;
+  }
+  .waiting-text { color: var(--text-muted); font-size: 18px; }
+  .waiting-text .dots::after { content: ''; animation: dots 1.5s infinite; }
+  @keyframes dots {
+    0%   { content: ''; }
+    33%  { content: '.'; }
+    66%  { content: '..'; }
+    100% { content: '...'; }
+  }
+
+  /* Buzz area */
+  .buzz-area {
+    flex-shrink: 0; width: 100%;
+    display: flex; flex-direction: column; align-items: center;
+    padding: 32px 24px 48px; gap: 16px;
+    background: linear-gradient(180deg, transparent, var(--bg) 30%);
+  }
+
+  /* Countdown ring */
+  .countdown-ring {
+    position: relative;
+    width: 220px; height: 220px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .countdown-svg {
+    position: absolute; inset: 0;
+    transform: rotate(-90deg);
+    pointer-events: none;
+  }
+  .countdown-circle {
+    fill: none;
+    stroke: var(--accent);
+    stroke-width: 4;
+    stroke-dasharray: 628;
+    stroke-dashoffset: 628;
+    stroke-linecap: round;
+    transition: stroke-dashoffset 0.1s linear;
+  }
+
+  .buzz-btn {
+    width: 200px; height: 200px; border-radius: 50%;
+    border: none; cursor: pointer;
+    font-family: var(--font-display); font-size: 42px;
+    letter-spacing: 3px; color: white;
+    position: relative; transition: all 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
+    -webkit-tap-highlight-color: transparent;
+    user-select: none; outline: none;
+    touch-action: manipulation;
+  }
+  .buzz-btn::before {
+    content: ''; position: absolute; inset: -8px;
+    border-radius: 50%; opacity: 0; transition: opacity 0.2s;
+  }
+
+  .buzz-btn.idle {
+    background: linear-gradient(135deg, #1a1a3e, #2a1a4e);
+    box-shadow: 0 4px 32px #00000066, inset 0 2px 4px rgba(255,255,255,0.05);
+    color: var(--text-muted); cursor: not-allowed;
+  }
+  .buzz-btn.countdown {
+    background: linear-gradient(135deg, #1a2a3e, #1a3a2e);
+    box-shadow: 0 4px 32px #00000066;
+    color: var(--accent3); cursor: not-allowed; font-size: 56px;
+  }
+  .buzz-btn.ready {
+    background: radial-gradient(circle at 40% 35%, #ff6ad5, #ff3cac 50%, #c21b7a);
+    box-shadow: 0 8px 48px #ff3cac88, 0 0 80px #ff3cac44, inset 0 2px 8px rgba(255,255,255,0.3);
+    animation: breathe 2s ease-in-out infinite;
+  }
+  .buzz-btn.ready::before {
+    background: radial-gradient(circle, #ff3cac66, transparent 70%);
+    opacity: 1; animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes breathe {
+    0%, 100% { transform: scale(1);    box-shadow: 0 8px 48px #ff3cac88, 0 0 80px #ff3cac44; }
+    50%       { transform: scale(1.03); box-shadow: 0 12px 64px #ff3cacaa, 0 0 120px #ff3cac66; }
+  }
+  @keyframes pulse {
+    0%, 100% { transform: scale(1);   opacity: 0.6; }
+    50%       { transform: scale(1.2); opacity: 0.3; }
+  }
+  .buzz-btn.ready:active {
+    transform: scale(0.94) !important;
+    animation: none;
+    box-shadow: 0 2px 16px #ff3cac66;
+  }
+  .buzz-btn.buzzing {
+    background: radial-gradient(circle at 40% 35%, #ffbe60, var(--accent4));
+    box-shadow: 0 8px 48px #ffbe0b88;
+    animation: none; cursor: default;
+  }
+  .buzz-btn.locked {
+    background: linear-gradient(135deg, #2a2a3e, #1a1a2e);
+    box-shadow: none; color: #555577; cursor: not-allowed;
+  }
+  .buzz-status {
+    font-family: var(--font-mono); font-size: 13px;
+    letter-spacing: 2px; text-transform: uppercase;
+    color: var(--text-muted); text-align: center;
+  }
+  .buzz-status.won  { color: var(--accent4); font-weight: 700; }
+  .buzz-status.lost { color: var(--text-muted); }
+
+  /* My score badge */
+  .my-score-badge {
+    font-family: var(--font-mono); font-size: 14px;
+    color: var(--accent4);
+    background: #ffbe0b11;
+    border: 1px solid #ffbe0b44;
+    border-radius: 8px;
+    padding: 6px 14px;
+  }
+
+  /* Who buzzed notification */
+  .buzzed-notification {
+    background: var(--surface2);
+    border: 2px solid var(--border);
+    border-radius: 16px; padding: 16px 24px;
+    text-align: center; display: none;
+    animation: fadeUp 0.3s ease;
+  }
+  .buzzed-notification.visible { display: block; }
+  .buzzed-notification .who { font-weight: 800; font-size: 20px; color: var(--accent); }
+  .buzzed-notification .label { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+  /* ══════════════════════════════════════
+     GAME OVER SCREEN (participant)
+  ══════════════════════════════════════ */
+  .game-over-overlay {
+    display: none;
+    position: fixed; inset: 0; z-index: 200;
+    background: #0a0a0fee;
+    flex-direction: column;
+    align-items: center; justify-content: center;
+    text-align: center; padding: 40px;
+    backdrop-filter: blur(12px);
+  }
+  .game-over-overlay.visible { display: flex; }
+  .game-over-icon { font-size: 80px; margin-bottom: 24px; }
+  .game-over-title {
+    font-family: var(--font-display); font-size: clamp(48px, 10vw, 96px);
+    letter-spacing: 4px; line-height: 1;
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    margin-bottom: 16px;
+  }
+  .game-over-sub {
+    font-size: 18px; color: var(--text-muted); margin-bottom: 40px;
+    font-family: var(--font-mono); letter-spacing: 1px;
+  }
+  .game-over-score {
+    font-family: var(--font-display); font-size: 32px;
+    color: var(--accent4); margin-bottom: 32px;
+  }
+  .btn-game-over-leave {
+    background: var(--surface);
+    border: 2px solid var(--border);
+    color: var(--text-muted);
+    padding: 14px 32px; border-radius: 12px;
+    font-family: var(--font-body); font-size: 16px; font-weight: 700;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .btn-game-over-leave:hover { border-color: var(--accent2); color: var(--text); }
+
+  /* ══════════════════════════════════════
+     FIREBASE CONFIG SCREEN
+  ══════════════════════════════════════ */
+  #config-screen {
+    display: none; flex-direction: column;
+    align-items: center; justify-content: center;
+    min-height: 100vh; padding: 40px 20px;
+    background: radial-gradient(ellipse 80% 60% at 50% 0%, #2a004466, transparent 70%);
+  }
+  #config-screen.active { display: flex; }
+
+  .config-box {
+    background: var(--surface);
+    border: 2px solid var(--border);
+    border-radius: 24px; padding: 40px;
+    width: 100%; max-width: 600px;
+  }
+  .config-box h2 { font-size: 24px; font-weight: 800; margin-bottom: 8px; color: var(--accent4); }
+  .step-block {
+    background: var(--surface2); border-radius: 12px;
+    padding: 16px; margin-bottom: 12px;
+    font-size: 14px; line-height: 1.7;
+    border-left: 3px solid var(--accent2);
+  }
+  .step-block .step-num { font-weight: 800; color: var(--accent2); margin-bottom: 4px; }
+  .step-block code {
+    background: #ffffff11; padding: 2px 6px; border-radius: 4px;
+    font-family: var(--font-mono); font-size: 11px; color: var(--accent3);
+  }
+  .step-block a { color: var(--accent3); }
+  .json-paste {
+    width: 100%; background: var(--surface2);
+    border: 2px solid var(--border); border-radius: 12px;
+    color: var(--accent3); font-family: var(--font-mono);
+    font-size: 12px; padding: 14px; resize: vertical; min-height: 120px; outline: none;
+  }
+  .json-paste:focus { border-color: var(--accent3); }
+
+  /* ── Shared utilities ── */
+  .error-msg { color: #ff6060; font-size: 13px; margin-top: 8px; display: none; }
+  .error-msg.visible { display: block; }
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+  .live-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: #00f5ff; display: inline-block; margin-right: 6px;
+    animation: livePulse 1.5s ease-in-out infinite;
+  }
+  @keyframes livePulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50%       { opacity: 0.4; transform: scale(0.7); }
+  }
+</style>
+</head>
+<body>
+
+<!-- FLASH OVERLAY -->
+<div class="flash-overlay" id="flashOverlay"></div>
+
+<!-- GAME OVER OVERLAY (participant only) -->
+<div class="game-over-overlay" id="gameOverOverlay">
+  <div class="game-over-icon">🏁</div>
+  <div class="game-over-title">GAME OVER</div>
+  <div class="game-over-sub">The host has ended the session</div>
+  <div class="game-over-score" id="gameOverScore"></div>
+  <button class="btn-game-over-leave" onclick="leaveRoom()">Leave Room</button>
+</div>
+
+<!-- ══════════════════════════════════════
+     FIREBASE CONFIG SCREEN
+══════════════════════════════════════ -->
+<div class="screen" id="config-screen">
+  <div class="config-box">
+    <h2>⚡ Firebase Setup Required</h2>
+    <p style="color:var(--text-muted);font-size:14px;margin-bottom:24px;">
+      This app needs a Firebase project for real-time sync. One-time setup, ~3 minutes.
+    </p>
+    <div class="step-block">
+      <div class="step-num">Step 1 — Create a Firebase project</div>
+      Go to <a href="https://console.firebase.google.com" target="_blank">console.firebase.google.com</a>
+      → "Add project" → any name → disable Analytics → Create.
+    </div>
+    <div class="step-block">
+      <div class="step-num">Step 2 — Enable Realtime Database</div>
+      Build → Realtime Database → Create Database → Start in <strong>test mode</strong> → Enable.
+    </div>
+    <div class="step-block">
+      <div class="step-num">Step 3 — Get your config</div>
+      Project Settings (⚙) → General → "Your apps" → click <code>&lt;/&gt;</code> Web →
+      Register app → copy the <code>firebaseConfig</code> object → paste below.
+    </div>
+    <div class="field" style="margin-top:20px;">
+      <label>Paste your firebaseConfig JSON here</label>
+      <textarea class="json-paste" id="firebaseConfigInput" placeholder='{
+  "apiKey": "AIza...",
+  "authDomain": "your-app.firebaseapp.com",
+  "databaseURL": "https://your-app-default-rtdb.firebaseio.com",
+  "projectId": "your-app",
+  "storageBucket": "your-app.appspot.com",
+  "messagingSenderId": "123...",
+  "appId": "1:123..."
+}'></textarea>
+      <div class="error-msg" id="configError">Invalid JSON or missing databaseURL. Please check and try again.</div>
+    </div>
+    <button class="btn btn-primary" onclick="saveFirebaseConfig()">Connect & Continue →</button>
+    <p style="margin-top:16px;font-size:12px;color:var(--text-muted);text-align:center;">
+      Your config is saved locally in this browser only.
+      <a href="#" style="color:var(--accent3);" onclick="clearConfig()">Clear saved config</a>
+    </p>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     LANDING SCREEN
+══════════════════════════════════════ -->
+<div class="screen" id="landing">
+  <div class="logo-title">
+    <h1>BUZZCODE</h1>
+    <p>⚡ Coding Contest Buzzer System</p>
+  </div>
+  <div class="role-cards">
+    <div class="role-card host" onclick="showHostSetup()">
+      <span class="icon">🖥️</span>
+      <h2>I'm the Host</h2>
+      <p>Control the session, display questions, manage the room from a projector or laptop.</p>
+    </div>
+    <div class="role-card participant" onclick="showParticipantSetup()">
+      <span class="icon">⚡</span>
+      <h2>I'm a Participant</h2>
+      <p>Join a room, see the question, and slam that buzzer first to take the solve.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     HOST SETUP MODAL
+══════════════════════════════════════ -->
+<div class="modal-overlay" id="hostSetupModal">
+  <div class="modal">
+    <h2>🖥️ Host Setup</h2>
+    <p class="subtitle">Configure your session and load your questions.</p>
+    <div class="field">
+      <label>Room Code (share with participants)</label>
+      <input type="text" id="hostRoomCode" placeholder="e.g. BUZZ42" maxlength="10"
+             style="text-transform:uppercase;font-family:var(--font-mono);letter-spacing:3px;font-size:20px;">
+      <div class="hint">Short and easy to type. Participants will enter this to join.</div>
+    </div>
+    <div class="field">
+      <label>Buzz-in Delay (seconds)</label>
+      <input type="number" id="buzzDelay" value="3" min="0" max="10"
+             style="font-family:var(--font-mono);font-size:20px;width:120px;">
+      <div class="hint">Countdown before the buzzer activates after each question reveal.</div>
+    </div>
+    <div class="field">
+      <label id="questionEntryLabel">Question 1</label>
+      <div class="question-entry-row">
+        <input type="text" id="singleQuestionInput" placeholder="Type a question and press + or Enter…">
+        <button class="btn-add-q" onclick="addQuestion()" title="Add question">+</button>
+      </div>
+      <div class="hint" id="questionCountHint">0 questions added</div>
+    </div>
+    <div class="error-msg" id="hostError">Please fill in the room code and at least one question.</div>
+    <button class="btn btn-primary" onclick="startHostSession()">Launch Session →</button>
+    <button class="btn btn-secondary" onclick="closeModal('hostSetupModal')">Cancel</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     PARTICIPANT SETUP MODAL
+══════════════════════════════════════ -->
+<div class="modal-overlay" id="participantSetupModal">
+  <div class="modal">
+    <h2>⚡ Join a Room</h2>
+    <p class="subtitle">Enter the room code and your name.</p>
+    <div class="field">
+      <label>Room Code</label>
+      <input type="text" id="participantRoomCode" placeholder="e.g. BUZZ42" maxlength="10"
+             style="text-transform:uppercase;font-family:var(--font-mono);letter-spacing:3px;font-size:20px;">
+    </div>
+    <div class="field">
+      <label>Your Name</label>
+      <input type="text" id="participantName" placeholder="e.g. Team 1" maxlength="24">
+    </div>
+    <div class="error-msg" id="participantError">Please enter both a room code and your name.</div>
+    <button class="btn btn-primary" onclick="joinParticipantSession()">Join Room →</button>
+    <button class="btn btn-secondary" onclick="closeModal('participantSetupModal')">Cancel</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     HOST SCREEN
+══════════════════════════════════════ -->
+<div class="screen" id="host">
+  <div class="host-sidebar">
+    <div class="sidebar-header">
+      <div class="room-code" id="sidebarRoomCode">—</div>
+      <div class="room-label"><span class="live-dot"></span>Live Room</div>
+    </div>
+    <div class="sidebar-participants-title">
+      Participants (<span id="participantCount">0</span>)
+    </div>
+    <div class="participant-list" id="participantList"></div>
+    <div class="sidebar-footer">
+      <button class="btn-action btn-reset" onclick="endSession()">End Session</button>
+    </div>
+  </div>
+
+  <div class="host-main">
+    <div class="host-topbar">
+      <div class="question-counter">
+        Question <span class="q-counter-num" id="currentQNum">—</span>
+        of <span id="totalQNum">—</span>
+      </div>
+      <div class="host-actions">
+        <button class="btn-action btn-award" id="awardPointBtn" onclick="awardPoint()" style="display:none;">
+          +1 Point →
+        </button>
+        <button class="btn-action btn-reset" id="resetBuzzBtn" onclick="resetBuzz()" style="display:none;">
+          ↺ Reset Buzz
+        </button>
+        <button class="btn-action btn-next" id="nextQBtn" onclick="nextQuestion()">
+          Next Question →
+        </button>
+      </div>
+    </div>
+
+    <div class="host-question-area">
+      <!-- Active round indicator -->
+      <div class="round-active-badge" id="roundActiveBadge">⚡ Round Active</div>
+
+      <div id="hostNoQuestion" class="no-question">
+        <span class="big-icon">🎮</span>
+        <h2>Ready to Start!</h2>
+        <p>Click "Next Question" to reveal the first question.</p>
+      </div>
+      <div id="hostQuestionContent" style="display:none;text-align:center;">
+        <div class="q-number-badge" id="hostQBadge">Q1</div>
+        <div class="question-text" id="hostQuestionText"></div>
+      </div>
+      <div class="winner-banner" id="winnerBanner">
+        <div class="buzzed-label">🚀 First to buzz in</div>
+        <div class="winner-name" id="winnerName"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     PARTICIPANT SCREEN
+══════════════════════════════════════ -->
+<div class="screen" id="participant">
+  <div class="participant-header">
+    <div class="participant-info">
+      <div class="my-avatar" id="myAvatarDisplay"></div>
+      <div class="my-name" id="myNameDisplay"></div>
+    </div>
+    <div style="display:flex;gap:12px;align-items:center;">
+      <div class="my-score-badge" id="myScoreBadge">⭐ 0 pts</div>
+      <div class="room-badge" id="myRoomBadge"></div>
+    </div>
+  </div>
+
+  <div class="participant-question-area">
+    <div id="participantWaiting" class="waiting-text">
+      Waiting for host to reveal a question<span class="dots"></span>
+    </div>
+    <div id="participantQuestionText" class="participant-question-text" style="display:none;"></div>
+  </div>
+
+  <div class="buzz-area">
+    <div class="buzzed-notification" id="buzzedNotification">
+      <div class="label">Buzzer locked to</div>
+      <div class="who" id="buzzedWho"></div>
+    </div>
+
+    <!-- Countdown ring wraps button -->
+    <div class="countdown-ring">
+      <svg class="countdown-svg" viewBox="0 0 220 220" id="countdownSvg" style="display:none;">
+        <circle class="countdown-circle" id="countdownCircle" cx="110" cy="110" r="100"/>
+      </svg>
+      <button class="buzz-btn idle" id="buzzBtn" onclick="buzz()" disabled>BUZZ!</button>
+    </div>
+
+    <div class="buzz-status" id="buzzStatus">Waiting for question...</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     FIREBASE SDK
+══════════════════════════════════════ -->
+<script type="module">
+import { initializeApp }           from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getDatabase, ref, set, onValue, update, remove, runTransaction, onDisconnect }
+  from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+/* ════════════════════════════════════════
+   1. CONFIG / CONSTANTS
+════════════════════════════════════════ */
+const AVATARS = ['🦊','🐉','🦁','🐺','🦅','🐙','🦄','🐸','🤖','👾','🦋','🐯','🐬','🌙','⚡','🎯'];
+const COLORS  = ['#ff3cac','#7b2fff','#00f5ff','#ffbe0b','#ff6b35','#4dff91','#ff4040','#a855f7','#06b6d4','#f59e0b'];
+const BUZZ_STATES = ['idle','countdown','ready','buzzing','locked'];
+const COUNTDOWN_CIRCUMFERENCE = 2 * Math.PI * 100; // r=100
+
+const DEFAULT_FIREBASE_CONFIG = {
+  apiKey: "AIzaSyDVXiZmWNs8nZp8-IPCrqQLp5BEGC7Sx-E",
+  authDomain: "buzzcode-641ed.firebaseapp.com",
+  databaseURL: "https://buzzcode-641ed-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "buzzcode-641ed",
+  storageBucket: "buzzcode-641ed.firebasestorage.app",
+  messagingSenderId: "676628156807",
+  appId: "1:676628156807:web:d137e0bd2edcb7cb390322"
+};
+
+function rand(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+/* ════════════════════════════════════════
+   2. GLOBAL STATE OBJECT
+════════════════════════════════════════ */
+const S = {
+  db: null,
+  roomCode: '',
+  isHost: false,
+  questions: [],
+  questionDraftList: [],
+  buzzDelay: 3,
+  currentQIndex: -1,
+  buzzWinnerId: null,
+  questionActive: false,
+  lastSeenRoundId: null,
+  // Participant-only
+  myId: null,
+  myName: '',
+  myAvatar: '',
+  myColor: '',
+  buzzState: 'idle',
+  countdownTimer: null,
+  countdownRemaining: 0,
+  gameEnded: false,
+  // FIX 2: Track last seen question index to avoid restarting countdown on re-fires
+  lastSeenQIndex: -1,
+  // Cached participant data for sidebar (host)
+  participantsCache: {},
+  scoresCache: {},
+};
+
+/* ════════════════════════════════════════
+   3. FIREBASE INITIALIZATION
+════════════════════════════════════════ */
+window.saveFirebaseConfig = function() {
+  const raw = document.getElementById('firebaseConfigInput').value.trim();
+  const errEl = document.getElementById('configError');
+  try {
+    const cfg = JSON.parse(raw);
+    if (!cfg.databaseURL) throw new Error('missing databaseURL');
+    localStorage.setItem('buzzcode_firebase_config', JSON.stringify(cfg));
+    errEl.classList.remove('visible');
+    initFirebase(cfg);
+    showScreen('landing');
+  } catch(e) {
+    errEl.classList.add('visible');
+  }
+};
+
+window.clearConfig = function() {
+  localStorage.removeItem('buzzcode_firebase_config');
+  localStorage.removeItem('buzzcode_session');
+  location.reload();
+};
+
+function isDefaultConfig(cfg) {
+  return !cfg || !cfg.databaseURL || cfg.databaseURL.startsWith('REPLACE_WITH');
+}
+
+function initFirebase(cfg) {
+  try {
+    const app = initializeApp(cfg);
+    S.db = getDatabase(app);
+  } catch(e) {
+    if (!e.message || !e.message.includes('already exists')) {
+      alert('Firebase connection failed. Check your config.\n\n' + e.message);
+    }
+  }
+}
+
+/* ════════════════════════════════════════
+   4. DATABASE SERVICE LAYER
+   All Firebase reads/writes live here.
+════════════════════════════════════════ */
+const DB = {
+  roomRef(path = '') {
+    return ref(S.db, `rooms/${S.roomCode}${path ? '/' + path : ''}`);
+  },
+
+  /** Host: create/overwrite room skeleton */
+  createRoom(data) {
+    return set(this.roomRef(), data);
+  },
+
+  /** Host: push next question — atomically resets buzzer in same write */
+  setQuestion(question, index) {
+    return update(this.roomRef(), {
+      currentQuestion: question,
+      currentQIndex:   index,
+      buzzer:          null,
+      buzzLocked:      false,
+      status:          'active',
+      roundId: Date.now()
+    });
+  },
+
+  /** Host: clear buzzer */
+  resetBuzzer() {
+    return update(this.roomRef(), { 
+    buzzer: null, 
+    buzzLocked: false,
+    roundId: Date.now()
+    });
+  },
+
+  /** Host: award point to a participant id */
+  awardPoint(participantId, currentScore) {
+    return update(this.roomRef(`scores/${participantId}`), {
+      points: (currentScore || 0) + 1,
+      name: S.participantsCache[participantId]?.name || '?',
+    });
+  },
+
+  /** Host: mark session as ended, then delete */
+  endRoom() {
+    return update(this.roomRef(), { status: 'ended' }).then(() => {
+      return new Promise(resolve => setTimeout(resolve, 3000));
+    }).then(() => {
+      return remove(this.roomRef());
+    });
+  },
+
+  /** Participant: register self */
+  registerParticipant() {
+    return set(this.roomRef(`participants/${S.myId}`), {
+      name:     S.myName,
+      avatar:   S.myAvatar,
+      color:    S.myColor,
+      joinedAt: Date.now(),
+    });
+  },
+
+  /** Participant: set onDisconnect cleanup (removes only the participant entry, not the room) */
+  registerDisconnect() {
+    onDisconnect(this.roomRef(`participants/${S.myId}`)).remove();
+  },
+
+  /**
+   * Participant: atomic buzzer claim via transaction.
+   * Only succeeds if buzzer is currently null.
+   */
+  claimBuzzer() {
+    return runTransaction(this.roomRef(), (room) => {
+      if (room === null) return room;
+      if (room.buzzer)  return;
+      room.buzzer    = { id: S.myId, name: S.myName, avatar: S.myAvatar, color: S.myColor, at: Date.now() };
+      room.buzzLocked = true;
+      return room;
+    });
+  },
+
+  /** Host: listen for participant list changes */
+  onParticipants(cb) {
+    return onValue(this.roomRef('participants'), snap => cb(snap.val() || {}));
+  },
+
+  /** Host: listen for scores changes */
+  onScores(cb) {
+    return onValue(this.roomRef('scores'), snap => cb(snap.val() || {}));
+  },
+
+  /** Listen to entire room state (host + participant) */
+  onRoom(cb) {
+    return onValue(this.roomRef(), snap => cb(snap.val()));
+  },
+};
+
+/* ════════════════════════════════════════
+   5. AUDIO / EFFECTS
+════════════════════════════════════════ */
+function playBuzzSound() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const o1 = ctx.createOscillator(), o2 = ctx.createOscillator();
+    const g  = ctx.createGain();
+    o1.connect(g); o2.connect(g); g.connect(ctx.destination);
+    o1.type = 'sawtooth'; o1.frequency.setValueAtTime(220, ctx.currentTime);
+    o1.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.08);
+    o2.type = 'square';   o2.frequency.setValueAtTime(440, ctx.currentTime);
+    o2.frequency.exponentialRampToValueAtTime(1760, ctx.currentTime + 0.08);
+    g.gain.setValueAtTime(0.4, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+    o1.start(); o2.start();
+    o1.stop(ctx.currentTime + 0.5); o2.stop(ctx.currentTime + 0.5);
+  } catch(e) {}
+}
+
+function flashScreen() {
+  const el = document.getElementById('flashOverlay');
+  el.classList.remove('flashing');
+  void el.offsetWidth;
+  el.classList.add('flashing');
+  setTimeout(() => el.classList.remove('flashing'), 700);
+}
+
+function vibrateDevice() {
+  if (navigator.vibrate) navigator.vibrate([80, 40, 80]);
+}
+
+/* ════════════════════════════════════════
+   6. UI RENDER / UPDATE FUNCTIONS
+════════════════════════════════════════ */
+
+// ── Screen routing ──
+window.showScreen = function(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+};
+
+// ── Host: participant sidebar ──
+function renderParticipantList(participants, scores) {
+  const pData = participants !== undefined ? participants : S.participantsCache;
+  const sData = scores      !== undefined ? scores      : S.scoresCache;
+
+  const list  = document.getElementById('participantList');
+  const count = document.getElementById('participantCount');
+
+  if (!list || !count) return;
+
+  const entries = Object.entries(pData);
+  count.textContent = entries.length;
+
+  if (entries.length === 0) {
+    list.innerHTML = `<div style="padding:16px;text-align:center;color:var(--text-muted);font-size:13px;">
+      No participants yet…<br><span style="font-size:11px;opacity:0.6;">Share the room code!</span>
+    </div>`;
+    return;
+  }
+
+  list.innerHTML = entries.map(([id, p]) => {
+    const isBuzzer = (S.buzzWinnerId === id);
+    const score    = sData[id]?.points || 0;
+    return `<div class="participant-item ${isBuzzer ? 'buzzer' : ''}">
+      <div class="avatar" style="background:${p.color}22;color:${p.color};border-color:${p.color}44">${p.avatar}</div>
+      <div class="participant-name">${escHtml(p.name)}</div>
+      <div class="participant-score">${score}</div>
+      <div class="participant-status ${isBuzzer ? 'status-buzzer' : 'status-online'}">${isBuzzer ? '⚡' : '●'}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── Host: show winner ──
+function hostShowWinner(buzzer) {
+  S.buzzWinnerId   = buzzer.id;
+  S.questionActive = false;
+  document.getElementById('winnerBanner').classList.add('visible');
+  document.getElementById('winnerName').textContent = buzzer.name;
+  document.getElementById('resetBuzzBtn').style.display  = 'inline-flex';
+  document.getElementById('awardPointBtn').style.display = 'inline-flex';
+  document.getElementById('nextQBtn').disabled = false;
+  document.getElementById('roundActiveBadge').classList.remove('visible');
+  playBuzzSound();
+  flashScreen();
+  renderParticipantList();
+}
+
+// ── Host: hide winner ──
+function hostHideWinner() {
+  S.buzzWinnerId = null;
+  document.getElementById('winnerBanner').classList.remove('visible');
+  document.getElementById('winnerName').textContent = '';
+  document.getElementById('resetBuzzBtn').style.display  = 'none';
+  document.getElementById('awardPointBtn').style.display = 'none';
+  const exhausted = S.currentQIndex >= S.questions.length - 1;
+  document.getElementById('nextQBtn').disabled = exhausted;
+  updateNextBtnText();
+  renderParticipantList();
+}
+
+// ── Update next question button text based on state ──
+function updateNextBtnText() {
+  const nextBtn = document.getElementById('nextQBtn');
+  if (!nextBtn) return;
+  const exhausted = S.currentQIndex >= S.questions.length - 1;
+  if (exhausted) {
+    nextBtn.textContent = 'No More Questions';
+  } else if (S.questionActive && !S.buzzWinnerId) {
+    nextBtn.textContent = 'Skip Question →';
+  } else {
+    nextBtn.textContent = 'Next Question →';
+  }
+}
+
+// ── Host: set active-round indicator ──
+function setRoundActive(active) {
+  S.questionActive = active;
+  const badge   = document.getElementById('roundActiveBadge');
+  const nextBtn = document.getElementById('nextQBtn');
+  if (active) {
+    badge.classList.add('visible');
+    nextBtn.disabled = false;
+  } else {
+    badge.classList.remove('visible');
+    const exhausted = S.currentQIndex >= S.questions.length - 1;
+    nextBtn.disabled = exhausted;
+  }
+  updateNextBtnText();
+}
+
+/* ════════════════════════════════════════
+   7. PARTICIPANT BUZZ STATE MACHINE
+════════════════════════════════════════ */
+function clearCountdownTimer() {
+  if (S.countdownTimer) {
+    clearInterval(S.countdownTimer);
+    S.countdownTimer = null;
+  }
+}
+
+function setBuzzState(state, statusText, statusClass = '') {
+  if (!BUZZ_STATES.includes(state)) return;
+  S.buzzState = state;
+
+  const btn    = document.getElementById('buzzBtn');
+  const status = document.getElementById('buzzStatus');
+  const ring   = document.getElementById('countdownSvg');
+  const circle = document.getElementById('countdownCircle');
+
+  if (state !== 'countdown') {
+    clearCountdownTimer();
+  }
+
+  btn.className = `buzz-btn ${state}`;
+  btn.disabled  = (state !== 'ready');
+  status.textContent = statusText;
+  status.className   = `buzz-status ${statusClass}`;
+
+  if (state === 'countdown') {
+    ring.style.display = 'block';
+    circle.style.stroke = 'var(--accent3)';
+  } else {
+    ring.style.display = 'none';
+    circle.style.strokeDashoffset = COUNTDOWN_CIRCUMFERENCE;
+  }
+}
+
+/** Start visual countdown then flip to ready */
+function startCountdown(seconds) {
+  if (S.countdownTimer) return;
+  clearCountdownTimer();
+
+  if (seconds <= 0) {
+    setBuzzState('ready', '⚡ Tap to buzz in!');
+    return;
+  }
+
+  setBuzzState('countdown', `Get ready... ${seconds}`, '');
+  const btn = document.getElementById('buzzBtn');
+  btn.textContent = seconds;
+
+  S.countdownRemaining = seconds;
+  const circle = document.getElementById('countdownCircle');
+  const total  = seconds * 1000;
+  const start  = Date.now();
+
+  S.countdownTimer = setInterval(() => {
+    const elapsed  = Date.now() - start;
+    const progress = Math.min(elapsed / total, 1);
+    circle.style.strokeDashoffset = COUNTDOWN_CIRCUMFERENCE * (1 - progress);
+
+    const remaining = Math.ceil((total - elapsed) / 1000);
+    if (remaining !== S.countdownRemaining) {
+      S.countdownRemaining = remaining;
+      btn.textContent = remaining > 0 ? remaining : 'BUZZ!';
+    }
+
+    if (progress >= 1) {
+      clearCountdownTimer();
+      btn.textContent = 'BUZZ!';
+      setBuzzState('ready', '⚡ Tap to buzz in!');
+    }
+  }, 50);
+}
+
+/* ════════════════════════════════════════
+   8. EVENT HANDLERS
+════════════════════════════════════════ */
+
+window.showHostSetup = function() {
+  // Reset draft list each time modal opens
+  S.questionDraftList = [];
+  document.getElementById('questionEntryLabel').textContent = 'Question 1';
+  document.getElementById('questionCountHint').textContent  = '0 questions added';
+  document.getElementById('singleQuestionInput').value      = '';
+  document.getElementById('hostRoomCode').value = 'BUZZ' + (10 + Math.floor(Math.random() * 90));
+  document.getElementById('hostSetupModal').classList.add('open');
+  // Bind Enter key on the question input
+  const inp = document.getElementById('singleQuestionInput');
+  inp.onkeydown = (e) => { if (e.key === 'Enter') { e.preventDefault(); addQuestion(); } };
+};
+
+window.addQuestion = function() {
+  const inp = document.getElementById('singleQuestionInput');
+  const val = inp.value.trim();
+  if (!val) return;
+  S.questionDraftList.push(val);
+  inp.value = '';
+  const count = S.questionDraftList.length;
+  document.getElementById('questionEntryLabel').textContent = `Question ${count + 1}`;
+  document.getElementById('questionCountHint').textContent  = `${count} question${count !== 1 ? 's' : ''} added`;
+  inp.focus();
+};
+
+window.showParticipantSetup = function() {
+  document.getElementById('participantSetupModal').classList.add('open');
+};
+
+window.closeModal = function(id) {
+  document.getElementById(id).classList.remove('open');
+};
+
+window.startHostSession = function() {
+  const code  = document.getElementById('hostRoomCode').value.trim().toUpperCase();
+  const delay = parseInt(document.getElementById('buzzDelay').value) || 0;
+  const qs    = S.questionDraftList;
+  const errEl = document.getElementById('hostError');
+
+  if (!code || qs.length === 0) { errEl.classList.add('visible'); return; }
+  errEl.classList.remove('visible');
+
+  S.roomCode       = code;
+  S.questions      = qs.slice(); // copy
+  S.isHost         = true;
+  S.buzzDelay      = delay;
+  S.currentQIndex  = -1;
+  S.questionActive = false;
+
+  DB.createRoom({
+    host:             true,
+    buzzDelay:        delay,
+    currentQuestion:  null,
+    currentQIndex:    -1,
+    totalQuestions:   qs.length,
+    buzzer:           null,
+    buzzLocked:       false,
+    status:           'active',
+    hostOnline:       true,
+    createdAt:        Date.now(),
+  });
+
+  onDisconnect(ref(S.db, `rooms/${S.roomCode}/hostOnline`)).set(false);
+
+  saveHostSession();
+
+  document.getElementById('sidebarRoomCode').textContent = code;
+  document.getElementById('totalQNum').textContent       = qs.length;
+  document.getElementById('currentQNum').textContent     = '—';
+
+  closeModal('hostSetupModal');
+  showScreen('host');
+  listenAsHost();
+};
+
+window.nextQuestion = function() {
+  // FIX: Only block if there's an active buzz winner; allow skipping active questions
+  if (S.buzzWinnerId) return;
+
+  setRoundActive(false);
+
+  clearCountdownTimer?.();
+
+  const next = S.currentQIndex + 1;
+  if (next >= S.questions.length) return;
+
+  S.currentQIndex = next;
+  const q = S.questions[next];
+
+  S.buzzWinnerId = null;
+  hostHideWinner();
+
+  DB.setQuestion(q, next);
+
+  document.getElementById('hostNoQuestion').style.display      = 'none';
+  document.getElementById('hostQuestionContent').style.display = 'block';
+  document.getElementById('hostQBadge').textContent  = `Q${next + 1}`;
+  document.getElementById('hostQuestionText').textContent = q;
+  document.getElementById('currentQNum').textContent = next + 1;
+
+  setRoundActive(true);
+  saveHostSession();
+};
+
+window.resetBuzz = function() {
+  DB.resetBuzzer();
+  hostHideWinner();
+  setRoundActive(true);
+};
+
+window.awardPoint = function() {
+  if (!S.buzzWinnerId) return;
+  const currentScore = S.scoresCache[S.buzzWinnerId]?.points || 0;
+  DB.awardPoint(S.buzzWinnerId, currentScore);
+  if (!S.scoresCache[S.buzzWinnerId]) S.scoresCache[S.buzzWinnerId] = { points: 0 };
+  S.scoresCache[S.buzzWinnerId].points = currentScore + 1;
+  renderParticipantList();
+  hostHideWinner();
+};
+
+window.endSession = function() {
+  if (!confirm('End the session? All participants will be disconnected.')) return;
+  DB.endRoom().then(() => {
+    localStorage.removeItem('buzzcode_session');
+    location.reload();
+  });
+};
+
+window.joinParticipantSession = function() {
+  const code = document.getElementById('participantRoomCode').value.trim().toUpperCase();
+  const name = document.getElementById('participantName').value.trim();
+  const errEl = document.getElementById('participantError');
+
+  if (!code || !name) { errEl.classList.add('visible'); return; }
+  errEl.classList.remove('visible');
+
+  S.roomCode = code;
+  S.myName   = name;
+  S.myAvatar = rand(AVATARS);
+  S.myColor  = rand(COLORS);
+  const savedId = localStorage.getItem(`buzzcode_pid_${code}`);
+  S.myId = savedId || ('p_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7));
+  localStorage.setItem(`buzzcode_pid_${code}`, S.myId);
+
+  DB.registerParticipant();
+  DB.registerDisconnect();
+  saveParticipantSession();
+
+  const av = document.getElementById('myAvatarDisplay');
+  av.textContent       = S.myAvatar;
+  av.style.background  = S.myColor + '22';
+  av.style.color       = S.myColor;
+  av.style.borderColor = S.myColor + '44';
+  document.getElementById('myNameDisplay').textContent = S.myName;
+  document.getElementById('myRoomBadge').textContent   = S.roomCode;
+
+  closeModal('participantSetupModal');
+  showScreen('participant');
+  listenAsParticipant();
+};
+
+/** Participant presses the buzz button */
+window.buzz = function() {
+  if (S.buzzState !== 'ready') return;
+  S.buzzState = 'locked'; // immediate local lock
+  setBuzzState('buzzing', 'Sending…');
+  vibrateDevice();
+
+  DB.claimBuzzer()
+    .then(result => {
+      if (!result.committed) {
+        setBuzzState('locked', 'Too slow! Someone else buzzed');
+      }
+    })
+    .catch(() => {
+      setBuzzState('ready', '⚡ Tap to buzz in!');
+    });
+};
+
+/* ════════════════════════════════════════
+   9. SESSION / ROOM MANAGEMENT
+════════════════════════════════════════ */
+
+window.leaveRoom = function() {
+  localStorage.removeItem('buzzcode_session');
+  localStorage.removeItem(`buzzcode_pid_${S.roomCode}`);
+  location.reload();
+};
+
+/* ════════════════════════════════════════
+   10. REALTIME LISTENERS
+════════════════════════════════════════ */
+function listenAsHost() {
+  DB.onParticipants(data => {
+    S.participantsCache = data;
+    renderParticipantList(data, S.scoresCache);
+  });
+
+  DB.onScores(data => {
+    S.scoresCache = data;
+    renderParticipantList(S.participantsCache, data);
+  });
+
+  DB.onRoom(data => {
+  if (!data) return;
+
+  if (data.currentQIndex !== S.currentQIndex) {
+    S.currentQIndex = data.currentQIndex || -1;
+
+    if (data.currentQuestion) {
+      document.getElementById('hostNoQuestion').style.display = 'none';
+      document.getElementById('hostQuestionContent').style.display = 'block';
+      document.getElementById('hostQBadge').textContent = `Q${S.currentQIndex + 1}`;
+      document.getElementById('hostQuestionText').textContent = data.currentQuestion;
+      document.getElementById('currentQNum').textContent = S.currentQIndex + 1;
+    }
+  }
+
+  if (data.buzzer && S.buzzWinnerId !== data.buzzer.id) {
+        hostShowWinner(data.buzzer);
+    } else if (!data.buzzer && S.buzzWinnerId) {
+    hostHideWinner();
+  }
+});
+}
+
+function listenAsParticipant() {
+  DB.onRoom(data => {
+    if (S.gameEnded) return;
+
+    if (!data || data.status === 'ended') {
+      if (!S.gameEnded) {
+        S.gameEnded = true;
+        clearCountdownTimer();
+        setBuzzState('idle', 'Game over');
+        showGameOver();
+      }
+      return;
+    }
+
+    if (data.hostOnline === false) {
+      setBuzzState('idle', 'Host reconnecting…');
+      return;
+    }
+
+    const q      = data.currentQuestion;
+    const buzzer = data.buzzer;
+    const delay  = data.buzzDelay || 0;
+    const notif  = document.getElementById('buzzedNotification');
+    const myScore = (data.scores?.[S.myId]?.points) || 0;
+    document.getElementById('myScoreBadge').textContent = `⭐ ${myScore} pts`;
+
+    // Question display
+    if (q) {
+      document.getElementById('participantWaiting').style.display      = 'none';
+      document.getElementById('participantQuestionText').style.display  = 'block';
+      document.getElementById('participantQuestionText').textContent    = q;
+    } else {
+      document.getElementById('participantWaiting').style.display      = 'block';
+      document.getElementById('participantQuestionText').style.display  = 'none';
+    }
+
+    // ── Buzzer FSM transitions ──
+    if (!q) {
+      clearCountdownTimer();
+      setBuzzState('idle', 'Waiting for question…');
+      notif.classList.remove('visible');
+      return;
+    }
+
+    if (buzzer) {
+      const isMe = buzzer.id === S.myId;
+      notif.classList.add('visible');
+      document.getElementById('buzzedWho').textContent = isMe ? 'You! 🎉' : buzzer.name;
+
+      if (isMe) {
+        clearCountdownTimer();
+        setBuzzState('buzzing', '🎉 You buzzed first!', 'won');
+      } else {
+        clearCountdownTimer();
+        setBuzzState('locked', `${escHtml(buzzer.name)} buzzed first`, 'lost');
+      }
+      return;
+    }
+
+    // No buzzer, question is live
+    notif.classList.remove('visible');
+
+    const serverRoundId = data.roundId;
+
+    if (!buzzer && S.buzzState === 'locked') {
+        startCountdown(delay);
+        return;
+        }
+
+        if (serverRoundId && serverRoundId !== S.lastSeenRoundId) {
+        S.lastSeenRoundId = serverRoundId;
+        startCountdown(delay);
+        }
+  });
+}
+
+/* ════════════════════════════════════════
+   11. GAME OVER UI (participant)
+════════════════════════════════════════ */
+function showGameOver() {
+  localStorage.removeItem('buzzcode_session');
+  localStorage.removeItem(`buzzcode_pid_${S.roomCode}`);
+
+  const overlay = document.getElementById('gameOverOverlay');
+  const scoreEl = document.getElementById('gameOverScore');
+  const myScore = parseInt(
+    (document.getElementById('myScoreBadge')?.textContent || '0').replace(/\D/g,'')
+  ) || 0;
+  scoreEl.textContent = myScore > 0 ? `You scored ${myScore} point${myScore !== 1 ? 's' : ''}! 🎉` : '';
+  overlay.classList.add('visible');
+}
+
+/* ════════════════════════════════════════
+   12. SESSION PERSISTENCE
+════════════════════════════════════════ */
+function saveHostSession() {
+  localStorage.setItem('buzzcode_session', JSON.stringify({
+    role:        'host',
+    roomCode:    S.roomCode,
+    questions:   S.questions,
+    buzzDelay:   S.buzzDelay,
+    qIndex:      S.currentQIndex,
+  }));
+}
+
+function saveParticipantSession() {
+  localStorage.setItem('buzzcode_session', JSON.stringify({
+    role:     'participant',
+    roomCode: S.roomCode,
+    myId:     S.myId,
+    myName:   S.myName,
+    myAvatar: S.myAvatar,
+    myColor:  S.myColor,
+  }));
+}
+
+function tryRestoreSession() {
+  const raw = localStorage.getItem('buzzcode_session');
+  if (!raw) return false;
+  try {
+    const sess = JSON.parse(raw);
+    if (!sess || !sess.role) return false;
+
+    if (sess.role === 'host') {
+      S.roomCode      = sess.roomCode;
+      S.questions     = sess.questions;
+      S.buzzDelay     = sess.buzzDelay || 0;
+      S.currentQIndex = sess.qIndex ?? -1;
+      S.isHost        = true;
+
+      document.getElementById('sidebarRoomCode').textContent = S.roomCode;
+      document.getElementById('totalQNum').textContent       = S.questions.length;
+      document.getElementById('currentQNum').textContent     = S.currentQIndex >= 0 ? S.currentQIndex + 1 : '—';
+
+      if (S.currentQIndex >= 0) {
+        const q = S.questions[S.currentQIndex];
+        document.getElementById('hostNoQuestion').style.display      = 'none';
+        document.getElementById('hostQuestionContent').style.display  = 'block';
+        document.getElementById('hostQBadge').textContent   = `Q${S.currentQIndex + 1}`;
+        document.getElementById('hostQuestionText').textContent = q;
+      }
+
+      update(ref(S.db, `rooms/${S.roomCode}`), { hostOnline: true });
+      onDisconnect(ref(S.db, `rooms/${S.roomCode}/hostOnline`)).set(false);
+
+      showScreen('host');
+      listenAsHost();
+      return true;
+    }
+
+    if (sess.role === 'participant') {
+      S.roomCode = sess.roomCode;
+      S.myId     = sess.myId;
+      S.myName   = sess.myName;
+      S.myAvatar = sess.myAvatar;
+      S.myColor  = sess.myColor;
+
+      DB.registerParticipant();
+      DB.registerDisconnect();
+
+      const av = document.getElementById('myAvatarDisplay');
+      av.textContent       = S.myAvatar;
+      av.style.background  = S.myColor + '22';
+      av.style.color       = S.myColor;
+      av.style.borderColor = S.myColor + '44';
+      document.getElementById('myNameDisplay').textContent = S.myName;
+      document.getElementById('myRoomBadge').textContent   = S.roomCode;
+
+      showScreen('participant');
+      listenAsParticipant();
+      return true;
+    }
+  } catch(e) {}
+  return false;
+}
+
+/* ════════════════════════════════════════
+   13. UTILITY FUNCTIONS
+════════════════════════════════════════ */
+function escHtml(str) {
+  return String(str)
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;');
+}
+
+/* ════════════════════════════════════════
+   14. APP BOOTSTRAP
+════════════════════════════════════════ */
+(function boot() {
+  let cfg = null;
+
+  const saved = localStorage.getItem('buzzcode_firebase_config');
+  if (saved) {
+    try { cfg = JSON.parse(saved); } catch(e) {}
+  }
+
+  if (!cfg || !cfg.databaseURL) {
+    if (!isDefaultConfig(DEFAULT_FIREBASE_CONFIG)) {
+      cfg = DEFAULT_FIREBASE_CONFIG;
+    }
+  }
+
+  if (!cfg || !cfg.databaseURL || isDefaultConfig(cfg)) {
+    showScreen('config-screen');
+    return;
+  }
+
+  initFirebase(cfg);
+
+  if (!tryRestoreSession()) {
+    showScreen('landing');
+  }
+})();
+</script>
+</body>
+</html>
