@@ -1390,6 +1390,13 @@ window.nextQuestion = function() {
 
   setRoundActive(true);
   saveHostSession();
+
+  const nextBtn = document.getElementById('nextQBtn');
+  if (next >= S.questions.length - 1) {
+    nextBtn.textContent = 'No More Questions';
+  } else {
+    nextBtn.textContent = 'Next Question →';
+  }
 };
 
 window.resetBuzz = function() {
@@ -1576,6 +1583,8 @@ function listenAsParticipant() {
     // No buzzer, question is live
     notif.classList.remove('visible');
 
+    // FIX 2: Only start countdown when a genuinely NEW question index is seen,
+    // preventing re-triggers from repeated onValue fires for the same question.
     const serverRoundId = data.roundId;
 
     if (!buzzer && S.buzzState === 'locked') {
@@ -1594,6 +1603,7 @@ function listenAsParticipant() {
    11. GAME OVER UI (participant)
 ════════════════════════════════════════ */
 function showGameOver() {
+  // FIX 3: Clear session data so a page refresh doesn't attempt to rejoin a dead room
   localStorage.removeItem('buzzcode_session');
   localStorage.removeItem(`buzzcode_pid_${S.roomCode}`);
 
