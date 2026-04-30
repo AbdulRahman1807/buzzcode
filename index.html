@@ -6,9 +6,6 @@
 <title>BuzzCode — Coding Contest Buzzer</title>
 <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Space+Mono:wght@400;700&family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
 <style>
-  /* ══════════════════════════════════════
-     CSS VARIABLES & RESET
-  ══════════════════════════════════════ */
   :root {
     --bg: #0a0a0f;
     --surface: #13131f;
@@ -36,7 +33,6 @@
     overflow-x: hidden;
   }
 
-  /* Noise overlay */
   body::before {
     content: '';
     position: fixed; inset: 0;
@@ -44,7 +40,6 @@
     pointer-events: none; z-index: 9999; opacity: 0.4;
   }
 
-  /* ── SCREENS ── */
   .screen { display: none; min-height: 100vh; }
   .screen.active { display: flex; }
 
@@ -97,11 +92,8 @@
     overflow: hidden;
   }
   .role-card::before {
-    content: '';
-    position: absolute; inset: 0;
-    opacity: 0;
-    transition: opacity 0.3s;
-    border-radius: 22px;
+    content: ''; position: absolute; inset: 0;
+    opacity: 0; transition: opacity 0.3s; border-radius: 22px;
   }
   .role-card.host::before   { background: radial-gradient(circle at 50% 0%, #ff3cac22, transparent 70%); }
   .role-card.participant::before { background: radial-gradient(circle at 50% 0%, #7b2fff22, transparent 70%); }
@@ -142,12 +134,9 @@
   .field { margin-bottom: 20px; }
   .field label {
     display: block;
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    color: var(--text-muted);
-    margin-bottom: 8px;
+    font-size: 12px; font-weight: 600;
+    letter-spacing: 2px; text-transform: uppercase;
+    color: var(--text-muted); margin-bottom: 8px;
   }
   .field input, .field textarea {
     width: 100%;
@@ -166,72 +155,42 @@
   .field input:focus, .field textarea:focus { border-color: var(--accent); }
   .field .hint { margin-top: 6px; font-size: 12px; color: var(--text-muted); }
 
-  /* ── Question entry row ── */
   .question-entry-row {
-    display: flex;
-    gap: 10px;
-    align-items: flex-end;
+    display: flex; gap: 10px; align-items: flex-end;
   }
   .question-entry-row textarea {
-    flex: 1;
-    min-width: 0;
-    resize: none;
-    overflow: hidden;
-    line-height: 1.5;
-    font-family: var(--font-body);
-    font-size: 16px;
-    padding: 14px 18px;
-    background: var(--surface2);
-    border: 2px solid var(--border);
-    border-radius: 12px;
-    color: var(--text);
-    outline: none;
-    transition: border-color 0.2s;
+    flex: 1; min-width: 0; resize: none; overflow: hidden;
+    line-height: 1.5; font-family: var(--font-body); font-size: 16px;
+    padding: 14px 18px; background: var(--surface2);
+    border: 2px solid var(--border); border-radius: 12px;
+    color: var(--text); outline: none; transition: border-color 0.2s;
   }
   .question-entry-row textarea:focus { border-color: var(--accent); }
   .btn-add-q {
-    flex-shrink: 0;
-    width: 48px; height: 52px;
+    flex-shrink: 0; width: 48px; height: 52px;
     background: linear-gradient(135deg, var(--accent2), var(--accent));
-    border: none; border-radius: 12px;
-    color: white; font-size: 24px; font-weight: 700;
-    cursor: pointer; transition: all 0.2s;
-    display: flex; align-items: center; justify-content: center;
-    line-height: 1;
-    /* stay anchored to bottom of textarea when it grows */
-    align-self: flex-end;
+    border: none; border-radius: 12px; color: white;
+    font-size: 24px; font-weight: 700; cursor: pointer;
+    transition: all 0.2s; display: flex; align-items: center;
+    justify-content: center; line-height: 1; align-self: flex-end;
   }
   .btn-add-q:hover { transform: scale(1.08); box-shadow: 0 4px 16px #7b2fff55; }
   .btn-add-q:active { transform: scale(0.96); }
 
   .btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    padding: 16px 32px;
-    border-radius: 12px;
-    font-family: var(--font-body);
-    font-size: 16px;
-    font-weight: 700;
-    cursor: pointer;
-    border: none;
-    transition: all 0.2s;
-    letter-spacing: 0.5px;
+    display: inline-flex; align-items: center; justify-content: center;
+    gap: 8px; padding: 16px 32px; border-radius: 12px;
+    font-family: var(--font-body); font-size: 16px; font-weight: 700;
+    cursor: pointer; border: none; transition: all 0.2s; letter-spacing: 0.5px;
   }
   .btn-primary {
     background: linear-gradient(135deg, var(--accent), var(--accent2));
-    color: white;
-    box-shadow: 0 4px 24px #ff3cac44;
-    width: 100%;
+    color: white; box-shadow: 0 4px 24px #ff3cac44; width: 100%;
   }
   .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 32px #ff3cac66; }
   .btn-secondary {
-    background: var(--surface2);
-    color: var(--text-muted);
-    border: 2px solid var(--border);
-    width: 100%;
-    margin-top: 12px;
+    background: var(--surface2); color: var(--text-muted);
+    border: 2px solid var(--border); width: 100%; margin-top: 12px;
   }
   .btn-secondary:hover { border-color: var(--accent2); color: var(--text); }
 
@@ -271,17 +230,11 @@
   }
   .participant-item.buzzer { background: #ff3cac22; border: 1px solid var(--accent); }
 
-  /* Score badge in sidebar */
   .participant-score {
-    font-family: var(--font-mono);
-    font-size: 12px; font-weight: 700;
-    color: var(--accent4);
-    background: #ffbe0b22;
-    border: 1px solid #ffbe0b44;
-    border-radius: 6px;
-    padding: 2px 7px;
-    min-width: 28px;
-    text-align: center;
+    font-family: var(--font-mono); font-size: 12px; font-weight: 700;
+    color: var(--accent4); background: #ffbe0b22;
+    border: 1px solid #ffbe0b44; border-radius: 6px;
+    padding: 2px 7px; min-width: 28px; text-align: center;
   }
 
   @keyframes slideIn {
@@ -308,11 +261,12 @@
     display: flex; flex-direction: column; gap: 8px;
   }
 
-  .host-main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  .host-main { flex: 1; display: flex; flex-direction: column; overflow: hidden; position: relative; }
   .host-topbar {
     display: flex; align-items: center; justify-content: space-between;
     padding: 16px 32px; border-bottom: 1px solid var(--border);
     background: var(--surface); gap: 16px;
+    position: relative; z-index: 10;
   }
   .question-counter { font-family: var(--font-mono); font-size: 14px; color: var(--text-muted); }
   .q-counter-num { color: var(--accent3); font-weight: 700; font-size: 18px; }
@@ -337,15 +291,9 @@
   .host-question-area {
     flex: 1; display: flex; flex-direction: column;
     align-items: center; justify-content: flex-start;
-    /* padding-top provides top breathing room; bottom is handled by ::after spacer.
-       overflow: hidden → overflow-y: auto so long questions are scrollable.
-       min-height: 0 lets this flex child shrink and hand scroll to overflow-y. */
     padding: 60px 80px 0; position: relative;
     overflow-y: auto; min-height: 0;
   }
-  /* Bottom spacer: acts like the bottom half of justify-content:center for short
-     questions, but collapses to min-height when content is tall, keeping scroll
-     anchored at the top so nothing is clipped. */
   .host-question-area::after {
     content: ''; flex: 1; min-height: 60px; width: 100%;
   }
@@ -373,7 +321,6 @@
   .no-question h2 { font-size: 28px; font-weight: 800; margin-bottom: 8px; }
   .no-question p { font-size: 16px; }
 
-  /* Active round indicator */
   .round-active-badge {
     display: none;
     position: absolute; top: 20px; right: 20px;
@@ -385,29 +332,150 @@
   }
   .round-active-badge.visible { display: block; }
 
-  .winner-banner {
+  /* ══════════════════════════════════════
+     BUZZ WINNER FULL-SCREEN OVERLAY
+     Used by BOTH host and participant
+  ══════════════════════════════════════ */
+  .buzz-winner-overlay {
     display: none;
-    position: absolute; bottom: 40px; left: 50%;
-    transform: translateX(-50%);
-    background: linear-gradient(135deg, var(--accent), var(--accent2));
-    border-radius: 20px; padding: 20px 40px;
-    text-align: center; box-shadow: 0 8px 48px #ff3cac55;
-    animation: popIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-    z-index: 10; min-width: 320px;
+    position: fixed; inset: 0; z-index: 150;
+    background: #0a0a0fee;
+    flex-direction: column;
+    align-items: center; justify-content: center;
+    text-align: center; padding: 40px;
+    backdrop-filter: blur(16px);
   }
-  .winner-banner.visible { display: block; }
-  @keyframes popIn {
-    from { transform: translateX(-50%) scale(0.5); opacity: 0; }
-    to   { transform: translateX(-50%) scale(1);   opacity: 1; }
+  .buzz-winner-overlay.visible { display: flex; }
+
+  /* Animated background rings */
+  .buzz-winner-overlay::before {
+    content: '';
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse 70% 50% at 50% 50%, #ff3cac18, transparent 60%),
+      radial-gradient(ellipse 40% 60% at 20% 80%, #7b2fff14, transparent 50%),
+      radial-gradient(ellipse 50% 40% at 80% 20%, #00f5ff0a, transparent 50%);
+    animation: bgPulse 3s ease-in-out infinite;
+    pointer-events: none;
   }
-  .winner-banner .buzzed-label {
-    font-family: var(--font-mono); font-size: 11px;
-    letter-spacing: 3px; text-transform: uppercase;
-    opacity: 0.8; margin-bottom: 4px;
+  @keyframes bgPulse {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.6; }
   }
-  .winner-banner .winner-name {
-    font-family: var(--font-display); font-size: 42px;
-    letter-spacing: 2px; line-height: 1;
+
+  .winner-overlay-icon {
+    font-size: 72px; margin-bottom: 16px;
+    animation: iconBounce 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    opacity: 0;
+  }
+  @keyframes iconBounce {
+    from { opacity: 0; transform: scale(0.3) translateY(30px); }
+    to   { opacity: 1; transform: scale(1) translateY(0); }
+  }
+
+  .winner-overlay-label {
+    font-family: var(--font-mono);
+    font-size: 13px; letter-spacing: 4px; text-transform: uppercase;
+    color: var(--text-muted); margin-bottom: 12px;
+    animation: fadeUp 0.5s ease 0.1s both;
+  }
+
+  .winner-overlay-name {
+    font-family: var(--font-display);
+    font-size: clamp(52px, 10vw, 100px);
+    letter-spacing: 3px; line-height: 1;
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 50%, var(--accent3) 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    filter: drop-shadow(0 0 40px #ff3cac66);
+    animation: nameReveal 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 0.2s both;
+    margin-bottom: 8px;
+  }
+  @keyframes nameReveal {
+    from { opacity: 0; transform: scale(0.7); }
+    to   { opacity: 1; transform: scale(1); }
+  }
+
+  .winner-overlay-sub {
+    font-size: 16px; color: var(--text-muted);
+    font-family: var(--font-mono); letter-spacing: 1px;
+    animation: fadeUp 0.5s ease 0.35s both;
+    margin-bottom: 48px;
+  }
+
+  /* Pulsing ring decoration around the name */
+  .winner-ring-wrap {
+    position: relative;
+    display: flex; flex-direction: column; align-items: center;
+    margin-bottom: 0;
+  }
+  .winner-ring-wrap::before,
+  .winner-ring-wrap::after {
+    content: '';
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    border: 2px solid var(--accent);
+    animation: ringExpand 2s ease-out infinite;
+    pointer-events: none;
+  }
+  .winner-ring-wrap::before {
+    width: 300px; height: 300px; opacity: 0.3;
+  }
+  .winner-ring-wrap::after {
+    width: 420px; height: 420px; opacity: 0.15;
+    animation-delay: 0.4s;
+  }
+  @keyframes ringExpand {
+    0%   { transform: translate(-50%, -50%) scale(0.8); opacity: 0.4; }
+    100% { transform: translate(-50%, -50%) scale(1.3); opacity: 0; }
+  }
+
+  /* Host-specific winner overlay actions */
+  .winner-overlay-actions {
+    display: flex; gap: 16px; flex-wrap: wrap; justify-content: center;
+    animation: fadeUp 0.5s ease 0.45s both;
+  }
+  .btn-overlay-award {
+    background: linear-gradient(135deg, #ffbe0b, #ff9500);
+    color: #0a0a0f; border: none; border-radius: 14px;
+    padding: 16px 36px; font-family: var(--font-body);
+    font-size: 16px; font-weight: 800; cursor: pointer;
+    transition: all 0.2s; letter-spacing: 0.5px;
+    box-shadow: 0 4px 24px #ffbe0b44;
+  }
+  .btn-overlay-award:hover { transform: translateY(-2px); box-shadow: 0 8px 32px #ffbe0b66; }
+  .btn-overlay-reset {
+    background: var(--surface2); color: var(--accent3);
+    border: 2px solid var(--accent3); border-radius: 14px;
+    padding: 16px 36px; font-family: var(--font-body);
+    font-size: 16px; font-weight: 700; cursor: pointer;
+    transition: all 0.2s; letter-spacing: 0.5px;
+  }
+  .btn-overlay-reset:hover { background: #00f5ff11; }
+  .btn-overlay-next {
+    background: linear-gradient(135deg, var(--accent2), var(--accent));
+    color: white; border: none; border-radius: 14px;
+    padding: 16px 36px; font-family: var(--font-body);
+    font-size: 16px; font-weight: 700; cursor: pointer;
+    transition: all 0.2s; letter-spacing: 0.5px;
+    box-shadow: 0 4px 24px #7b2fff44;
+  }
+  .btn-overlay-next:hover { transform: translateY(-2px); box-shadow: 0 8px 32px #7b2fff66; }
+
+  /* Participant-specific: "you won" vs "someone else" variants */
+  .winner-overlay-name.is-me {
+    background: linear-gradient(135deg, var(--accent4) 0%, #ff9500 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    filter: drop-shadow(0 0 40px #ffbe0b66);
+  }
+  .buzz-winner-overlay.is-me::before {
+    background:
+      radial-gradient(ellipse 70% 50% at 50% 50%, #ffbe0b18, transparent 60%),
+      radial-gradient(ellipse 40% 60% at 20% 80%, #ff950014, transparent 50%);
+  }
+  .winner-ring-wrap.is-me::before,
+  .winner-ring-wrap.is-me::after {
+    border-color: var(--accent4);
   }
 
   /* Flash overlay */
@@ -449,23 +517,6 @@
     padding: 6px 14px; border-radius: 8px; letter-spacing: 2px;
   }
 
-  /* ─────────────────────────────────────
-     FIX: Participant question area
-
-     Root cause: `align-items: center` on a flex container with `overflow-y: auto`
-     causes the child to overflow both top AND bottom symmetrically, so the browser
-     cannot scroll to reveal the clipped edges — you only ever see the middle.
-
-     Fix: switch to a column-direction flex with ::before / ::after spacers.
-     The spacers each have `flex: 1`, so they share leftover space equally,
-     centering the content when the question is short. When the question is tall
-     enough to consume all the space, the spacers shrink to their min-height (40px
-     of breathing room) and the container becomes scrollable from the top — the full
-     question is now reachable.
-
-     `min-height: 0` is required so this flex child can shrink below its content
-     size and hand scroll control back to its own overflow-y.
-  ───────────────────────────────────── */
   .participant-question-area {
     flex: 1; width: 100%; min-height: 0;
     display: flex; flex-direction: column; align-items: center;
@@ -479,14 +530,9 @@
   .participant-question-text {
     font-size: clamp(18px, 4vw, 32px); font-weight: 700;
     line-height: 1.5; max-width: 600px; animation: fadeUp 0.4s ease;
-    white-space: pre-wrap;
-    /* Ensure the text itself doesn't shrink to nothing */
-    flex-shrink: 0;
+    white-space: pre-wrap; flex-shrink: 0;
   }
-  .waiting-text {
-    color: var(--text-muted); font-size: 18px;
-    flex-shrink: 0;
-  }
+  .waiting-text { color: var(--text-muted); font-size: 18px; flex-shrink: 0; }
   .waiting-text .dots::after { content: ''; animation: dots 1.5s infinite; }
   @keyframes dots {
     0%   { content: ''; }
@@ -495,7 +541,6 @@
     100% { content: '...'; }
   }
 
-  /* Buzz area */
   .buzz-area {
     flex-shrink: 0; width: 100%;
     display: flex; flex-direction: column; align-items: center;
@@ -503,24 +548,17 @@
     background: linear-gradient(180deg, transparent, var(--bg) 30%);
   }
 
-  /* Countdown ring */
   .countdown-ring {
-    position: relative;
-    width: 220px; height: 220px;
+    position: relative; width: 220px; height: 220px;
     display: flex; align-items: center; justify-content: center;
   }
   .countdown-svg {
     position: absolute; inset: 0;
-    transform: rotate(-90deg);
-    pointer-events: none;
+    transform: rotate(-90deg); pointer-events: none;
   }
   .countdown-circle {
-    fill: none;
-    stroke: var(--accent);
-    stroke-width: 4;
-    stroke-dasharray: 628;
-    stroke-dashoffset: 628;
-    stroke-linecap: round;
+    fill: none; stroke: var(--accent); stroke-width: 4;
+    stroke-dasharray: 628; stroke-dashoffset: 628; stroke-linecap: round;
     transition: stroke-dashoffset 0.1s linear;
   }
 
@@ -531,14 +569,12 @@
     letter-spacing: 3px; color: white;
     position: relative; transition: all 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
     -webkit-tap-highlight-color: transparent;
-    user-select: none; outline: none;
-    touch-action: manipulation;
+    user-select: none; outline: none; touch-action: manipulation;
   }
   .buzz-btn::before {
     content: ''; position: absolute; inset: -8px;
     border-radius: 50%; opacity: 0; transition: opacity 0.2s;
   }
-
   .buzz-btn.idle {
     background: linear-gradient(135deg, #1a1a3e, #2a1a4e);
     box-shadow: 0 4px 32px #00000066, inset 0 2px 4px rgba(255,255,255,0.05);
@@ -567,14 +603,12 @@
     50%       { transform: scale(1.2); opacity: 0.3; }
   }
   .buzz-btn.ready:active {
-    transform: scale(0.94) !important;
-    animation: none;
+    transform: scale(0.94) !important; animation: none;
     box-shadow: 0 2px 16px #ff3cac66;
   }
   .buzz-btn.buzzing {
     background: radial-gradient(circle at 40% 35%, #ffbe60, var(--accent4));
-    box-shadow: 0 8px 48px #ffbe0b88;
-    animation: none; cursor: default;
+    box-shadow: 0 8px 48px #ffbe0b88; animation: none; cursor: default;
   }
   .buzz-btn.locked {
     background: linear-gradient(135deg, #2a2a3e, #1a1a2e);
@@ -588,27 +622,11 @@
   .buzz-status.won  { color: var(--accent4); font-weight: 700; }
   .buzz-status.lost { color: var(--text-muted); }
 
-  /* My score badge */
   .my-score-badge {
     font-family: var(--font-mono); font-size: 14px;
-    color: var(--accent4);
-    background: #ffbe0b11;
-    border: 1px solid #ffbe0b44;
-    border-radius: 8px;
-    padding: 6px 14px;
+    color: var(--accent4); background: #ffbe0b11;
+    border: 1px solid #ffbe0b44; border-radius: 8px; padding: 6px 14px;
   }
-
-  /* Who buzzed notification */
-  .buzzed-notification {
-    background: var(--surface2);
-    border: 2px solid var(--border);
-    border-radius: 16px; padding: 16px 24px;
-    text-align: center; display: none;
-    animation: fadeUp 0.3s ease;
-  }
-  .buzzed-notification.visible { display: block; }
-  .buzzed-notification .who { font-weight: 800; font-size: 20px; color: var(--accent); }
-  .buzzed-notification .label { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
 
   /* ══════════════════════════════════════
      GAME OVER SCREEN (participant)
@@ -640,10 +658,8 @@
     color: var(--accent4); margin-bottom: 32px;
   }
   .btn-game-over-leave {
-    background: var(--surface);
-    border: 2px solid var(--border);
-    color: var(--text-muted);
-    padding: 14px 32px; border-radius: 12px;
+    background: var(--surface); border: 2px solid var(--border);
+    color: var(--text-muted); padding: 14px 32px; border-radius: 12px;
     font-family: var(--font-body); font-size: 16px; font-weight: 700;
     cursor: pointer; transition: all 0.2s;
   }
@@ -661,17 +677,14 @@
   #config-screen.active { display: flex; }
 
   .config-box {
-    background: var(--surface);
-    border: 2px solid var(--border);
-    border-radius: 24px; padding: 40px;
-    width: 100%; max-width: 600px;
+    background: var(--surface); border: 2px solid var(--border);
+    border-radius: 24px; padding: 40px; width: 100%; max-width: 600px;
   }
   .config-box h2 { font-size: 24px; font-weight: 800; margin-bottom: 8px; color: var(--accent4); }
   .step-block {
     background: var(--surface2); border-radius: 12px;
     padding: 16px; margin-bottom: 12px;
-    font-size: 14px; line-height: 1.7;
-    border-left: 3px solid var(--accent2);
+    font-size: 14px; line-height: 1.7; border-left: 3px solid var(--accent2);
   }
   .step-block .step-num { font-weight: 800; color: var(--accent2); margin-bottom: 4px; }
   .step-block code {
@@ -687,7 +700,6 @@
   }
   .json-paste:focus { border-color: var(--accent3); }
 
-  /* ── Shared utilities ── */
   .error-msg { color: #ff6060; font-size: 13px; margin-top: 8px; display: none; }
   .error-msg.visible { display: block; }
   ::-webkit-scrollbar { width: 4px; }
@@ -708,6 +720,35 @@
 
 <!-- FLASH OVERLAY -->
 <div class="flash-overlay" id="flashOverlay"></div>
+
+<!-- ══════════════════════════════════════
+     BUZZ WINNER FULL-SCREEN OVERLAY (HOST)
+══════════════════════════════════════ -->
+<div class="buzz-winner-overlay" id="hostWinnerOverlay">
+  <div class="winner-overlay-icon" id="hostWinnerIcon">🚀</div>
+  <div class="winner-overlay-label">First to buzz in</div>
+  <div class="winner-ring-wrap" id="hostWinnerRingWrap">
+    <div class="winner-overlay-name" id="hostWinnerOverlayName"></div>
+  </div>
+  <div class="winner-overlay-sub" id="hostWinnerSub"></div>
+  <div class="winner-overlay-actions">
+    <button class="btn-overlay-award" onclick="awardPoint()">⭐ Award Point</button>
+    <button class="btn-overlay-reset" onclick="resetBuzz()">↺ Reset Buzz</button>
+    <button class="btn-overlay-next" onclick="nextQuestion()">Next Question →</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     BUZZ WINNER FULL-SCREEN OVERLAY (PARTICIPANT)
+══════════════════════════════════════ -->
+<div class="buzz-winner-overlay" id="participantWinnerOverlay">
+  <div class="winner-overlay-icon" id="participantWinnerIcon">⚡</div>
+  <div class="winner-overlay-label" id="participantWinnerLabel">First to buzz in</div>
+  <div class="winner-ring-wrap" id="participantWinnerRingWrap">
+    <div class="winner-overlay-name" id="participantWinnerOverlayName"></div>
+  </div>
+  <div class="winner-overlay-sub" id="participantWinnerSub"></div>
+</div>
 
 <!-- GAME OVER OVERLAY (participant only) -->
 <div class="game-over-overlay" id="gameOverOverlay">
@@ -865,12 +906,6 @@
         of <span id="totalQNum">—</span>
       </div>
       <div class="host-actions">
-        <button class="btn-action btn-award" id="awardPointBtn" onclick="awardPoint()" style="display:none;">
-          +1 Point →
-        </button>
-        <button class="btn-action btn-reset" id="resetBuzzBtn" onclick="resetBuzz()" style="display:none;">
-          ↺ Reset Buzz
-        </button>
         <button class="btn-action btn-next" id="nextQBtn" onclick="nextQuestion()">
           Next Question →
         </button>
@@ -878,7 +913,6 @@
     </div>
 
     <div class="host-question-area">
-      <!-- Active round indicator -->
       <div class="round-active-badge" id="roundActiveBadge">⚡ Round Active</div>
 
       <div id="hostNoQuestion" class="no-question">
@@ -889,10 +923,6 @@
       <div id="hostQuestionContent" style="display:none;text-align:center;">
         <div class="q-number-badge" id="hostQBadge">Q1</div>
         <div class="question-text" id="hostQuestionText"></div>
-      </div>
-      <div class="winner-banner" id="winnerBanner">
-        <div class="buzzed-label">🚀 First to buzz in</div>
-        <div class="winner-name" id="winnerName"></div>
       </div>
     </div>
   </div>
@@ -921,19 +951,12 @@
   </div>
 
   <div class="buzz-area">
-    <div class="buzzed-notification" id="buzzedNotification">
-      <div class="label">Buzzer locked to</div>
-      <div class="who" id="buzzedWho"></div>
-    </div>
-
-    <!-- Countdown ring wraps button -->
     <div class="countdown-ring">
       <svg class="countdown-svg" viewBox="0 0 220 220" id="countdownSvg" style="display:none;">
         <circle class="countdown-circle" id="countdownCircle" cx="110" cy="110" r="100"/>
       </svg>
       <button class="buzz-btn idle" id="buzzBtn" onclick="buzz()" disabled>BUZZ!</button>
     </div>
-
     <div class="buzz-status" id="buzzStatus">Waiting for question...</div>
   </div>
 </div>
@@ -946,13 +969,10 @@ import { initializeApp }           from "https://www.gstatic.com/firebasejs/10.1
 import { getDatabase, ref, set, onValue, update, remove, runTransaction, onDisconnect }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
-/* ════════════════════════════════════════
-   1. CONFIG / CONSTANTS
-════════════════════════════════════════ */
 const AVATARS = ['🦊','🐉','🦁','🐺','🦅','🐙','🦄','🐸','🤖','👾','🦋','🐯','🐬','🌙','⚡','🎯'];
 const COLORS  = ['#ff3cac','#7b2fff','#00f5ff','#ffbe0b','#ff6b35','#4dff91','#ff4040','#a855f7','#06b6d4','#f59e0b'];
 const BUZZ_STATES = ['idle','countdown','ready','buzzing','locked'];
-const COUNTDOWN_CIRCUMFERENCE = 2 * Math.PI * 100; // r=100
+const COUNTDOWN_CIRCUMFERENCE = 2 * Math.PI * 100;
 
 const DEFAULT_FIREBASE_CONFIG = {
   apiKey: "AIzaSyDVXiZmWNs8nZp8-IPCrqQLp5BEGC7Sx-E",
@@ -966,9 +986,6 @@ const DEFAULT_FIREBASE_CONFIG = {
 
 function rand(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
-/* ════════════════════════════════════════
-   2. GLOBAL STATE OBJECT
-════════════════════════════════════════ */
 const S = {
   db: null,
   roomCode: '',
@@ -980,7 +997,6 @@ const S = {
   buzzWinnerId: null,
   questionActive: false,
   lastSeenRoundId: null,
-  // Participant-only
   myId: null,
   myName: '',
   myAvatar: '',
@@ -989,16 +1005,12 @@ const S = {
   countdownTimer: null,
   countdownRemaining: 0,
   gameEnded: false,
-  // FIX 2: Track last seen question index to avoid restarting countdown on re-fires
   lastSeenQIndex: -1,
-  // Cached participant data for sidebar (host)
   participantsCache: {},
   scoresCache: {},
 };
 
-/* ════════════════════════════════════════
-   3. FIREBASE INITIALIZATION
-════════════════════════════════════════ */
+/* ── Firebase init ── */
 window.saveFirebaseConfig = function() {
   const raw = document.getElementById('firebaseConfigInput').value.trim();
   const errEl = document.getElementById('configError');
@@ -1009,9 +1021,7 @@ window.saveFirebaseConfig = function() {
     errEl.classList.remove('visible');
     initFirebase(cfg);
     showScreen('landing');
-  } catch(e) {
-    errEl.classList.add('visible');
-  }
+  } catch(e) { errEl.classList.add('visible'); }
 };
 
 window.clearConfig = function() {
@@ -1035,77 +1045,40 @@ function initFirebase(cfg) {
   }
 }
 
-/* ════════════════════════════════════════
-   4. DATABASE SERVICE LAYER
-   All Firebase reads/writes live here.
-════════════════════════════════════════ */
+/* ── DB layer ── */
 const DB = {
   roomRef(path = '') {
     return ref(S.db, `rooms/${S.roomCode}${path ? '/' + path : ''}`);
   },
-
-  /** Host: create/overwrite room skeleton */
-  createRoom(data) {
-    return set(this.roomRef(), data);
-  },
-
-  /** Host: push next question — atomically resets buzzer in same write */
+  createRoom(data)               { return set(this.roomRef(), data); },
   setQuestion(question, index) {
     return update(this.roomRef(), {
-      currentQuestion: question,
-      currentQIndex:   index,
-      buzzer:          null,
-      buzzLocked:      false,
-      status:          'active',
-      roundId: Date.now()
+      currentQuestion: question, currentQIndex: index,
+      buzzer: null, buzzLocked: false, status: 'active', roundId: Date.now()
     });
   },
-
-  /** Host: clear buzzer */
   resetBuzzer() {
-    return update(this.roomRef(), { 
-    buzzer: null, 
-    buzzLocked: false,
-    roundId: Date.now()
-    });
+    return update(this.roomRef(), { buzzer: null, buzzLocked: false, roundId: Date.now() });
   },
-
-  /** Host: award point to a participant id */
   awardPoint(participantId, currentScore) {
     return update(this.roomRef(`scores/${participantId}`), {
       points: (currentScore || 0) + 1,
       name: S.participantsCache[participantId]?.name || '?',
     });
   },
-
-  /** Host: mark session as ended, then delete */
   endRoom() {
-    return update(this.roomRef(), { status: 'ended' }).then(() => {
-      return new Promise(resolve => setTimeout(resolve, 3000));
-    }).then(() => {
-      return remove(this.roomRef());
-    });
+    return update(this.roomRef(), { status: 'ended' })
+      .then(() => new Promise(r => setTimeout(r, 3000)))
+      .then(() => remove(this.roomRef()));
   },
-
-  /** Participant: register self */
   registerParticipant() {
     return set(this.roomRef(`participants/${S.myId}`), {
-      name:     S.myName,
-      avatar:   S.myAvatar,
-      color:    S.myColor,
-      joinedAt: Date.now(),
+      name: S.myName, avatar: S.myAvatar, color: S.myColor, joinedAt: Date.now(),
     });
   },
-
-  /** Participant: set onDisconnect cleanup (removes only the participant entry, not the room) */
   registerDisconnect() {
     onDisconnect(this.roomRef(`participants/${S.myId}`)).remove();
   },
-
-  /**
-   * Participant: atomic buzzer claim via transaction.
-   * Only succeeds if buzzer is currently null.
-   */
   claimBuzzer() {
     return runTransaction(this.roomRef(), (room) => {
       if (room === null) return room;
@@ -1115,26 +1088,12 @@ const DB = {
       return room;
     });
   },
-
-  /** Host: listen for participant list changes */
-  onParticipants(cb) {
-    return onValue(this.roomRef('participants'), snap => cb(snap.val() || {}));
-  },
-
-  /** Host: listen for scores changes */
-  onScores(cb) {
-    return onValue(this.roomRef('scores'), snap => cb(snap.val() || {}));
-  },
-
-  /** Listen to entire room state (host + participant) */
-  onRoom(cb) {
-    return onValue(this.roomRef(), snap => cb(snap.val()));
-  },
+  onParticipants(cb) { return onValue(this.roomRef('participants'), s => cb(s.val() || {})); },
+  onScores(cb)       { return onValue(this.roomRef('scores'),       s => cb(s.val() || {})); },
+  onRoom(cb)         { return onValue(this.roomRef(),               s => cb(s.val())); },
 };
 
-/* ════════════════════════════════════════
-   5. AUDIO / EFFECTS
-════════════════════════════════════════ */
+/* ── Audio / FX ── */
 function playBuzzSound() {
   try {
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -1164,36 +1123,27 @@ function vibrateDevice() {
   if (navigator.vibrate) navigator.vibrate([80, 40, 80]);
 }
 
-/* ════════════════════════════════════════
-   6. UI RENDER / UPDATE FUNCTIONS
-════════════════════════════════════════ */
-
-// ── Screen routing ──
+/* ── Screen routing ── */
 window.showScreen = function(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
 };
 
-// ── Host: participant sidebar ──
+/* ── Participant list (host sidebar) ── */
 function renderParticipantList(participants, scores) {
   const pData = participants !== undefined ? participants : S.participantsCache;
   const sData = scores      !== undefined ? scores      : S.scoresCache;
-
   const list  = document.getElementById('participantList');
   const count = document.getElementById('participantCount');
-
   if (!list || !count) return;
-
   const entries = Object.entries(pData);
   count.textContent = entries.length;
-
   if (entries.length === 0) {
     list.innerHTML = `<div style="padding:16px;text-align:center;color:var(--text-muted);font-size:13px;">
       No participants yet…<br><span style="font-size:11px;opacity:0.6;">Share the room code!</span>
     </div>`;
     return;
   }
-
   list.innerHTML = entries.map(([id, p]) => {
     const isBuzzer = (S.buzzWinnerId === id);
     const score    = sData[id]?.points || 0;
@@ -1206,35 +1156,87 @@ function renderParticipantList(participants, scores) {
   }).join('');
 }
 
-// ── Host: show winner ──
+/* ══════════════════════════════════════
+   BUZZ WINNER OVERLAY — HOST
+══════════════════════════════════════ */
 function hostShowWinner(buzzer) {
   S.buzzWinnerId   = buzzer.id;
   S.questionActive = false;
-  document.getElementById('winnerBanner').classList.add('visible');
-  document.getElementById('winnerName').textContent = buzzer.name;
-  document.getElementById('resetBuzzBtn').style.display  = 'inline-flex';
-  document.getElementById('awardPointBtn').style.display = 'inline-flex';
-  document.getElementById('nextQBtn').disabled = false;
   document.getElementById('roundActiveBadge').classList.remove('visible');
+
+  // Populate and show the full-screen overlay
+  const overlay = document.getElementById('hostWinnerOverlay');
+  document.getElementById('hostWinnerOverlayName').textContent = buzzer.name;
+  const qNum = S.currentQIndex + 1;
+  document.getElementById('hostWinnerSub').textContent = `Question ${qNum} · ${buzzer.avatar || '⚡'}`;
+
+  // Restart animations by cloning icon
+  const icon = document.getElementById('hostWinnerIcon');
+  icon.textContent = '🚀';
+  const clone = icon.cloneNode(true);
+  icon.replaceWith(clone);
+
+  overlay.classList.add('visible');
+
+  // Update next-q button state (still usable inside overlay)
+  const exhausted = S.currentQIndex >= S.questions.length - 1;
+  document.getElementById('nextQBtn').disabled = exhausted;
+  updateNextBtnText();
+
   playBuzzSound();
   flashScreen();
   renderParticipantList();
 }
 
-// ── Host: hide winner ──
 function hostHideWinner() {
   S.buzzWinnerId = null;
-  document.getElementById('winnerBanner').classList.remove('visible');
-  document.getElementById('winnerName').textContent = '';
-  document.getElementById('resetBuzzBtn').style.display  = 'none';
-  document.getElementById('awardPointBtn').style.display = 'none';
+  document.getElementById('hostWinnerOverlay').classList.remove('visible');
   const exhausted = S.currentQIndex >= S.questions.length - 1;
   document.getElementById('nextQBtn').disabled = exhausted;
   updateNextBtnText();
   renderParticipantList();
 }
 
-// ── Update next question button text based on state ──
+/* ══════════════════════════════════════
+   BUZZ WINNER OVERLAY — PARTICIPANT
+══════════════════════════════════════ */
+function participantShowWinner(buzzer, isMe) {
+  const overlay   = document.getElementById('participantWinnerOverlay');
+  const nameEl    = document.getElementById('participantWinnerOverlayName');
+  const iconEl    = document.getElementById('participantWinnerIcon');
+  const labelEl   = document.getElementById('participantWinnerLabel');
+  const subEl     = document.getElementById('participantWinnerSub');
+  const ringWrap  = document.getElementById('participantWinnerRingWrap');
+
+  // Reset animation by forcing reflow
+  overlay.classList.remove('visible', 'is-me');
+  nameEl.classList.remove('is-me');
+  ringWrap.classList.remove('is-me');
+  void overlay.offsetWidth;
+
+  if (isMe) {
+    overlay.classList.add('is-me');
+    nameEl.classList.add('is-me');
+    ringWrap.classList.add('is-me');
+    iconEl.textContent   = '🎉';
+    labelEl.textContent  = 'You buzzed first!';
+    nameEl.textContent   = S.myName;
+    subEl.textContent    = 'Waiting for host…';
+  } else {
+    iconEl.textContent   = '⚡';
+    labelEl.textContent  = 'First to buzz in';
+    nameEl.textContent   = buzzer.name;
+    subEl.textContent    = 'Waiting for next question…';
+  }
+
+  overlay.classList.add('visible');
+}
+
+function participantHideWinner() {
+  document.getElementById('participantWinnerOverlay').classList.remove('visible', 'is-me');
+}
+
+/* ── Next button text ── */
 function updateNextBtnText() {
   const nextBtn = document.getElementById('nextQBtn');
   if (!nextBtn) return;
@@ -1248,7 +1250,6 @@ function updateNextBtnText() {
   }
 }
 
-// ── Host: set active-round indicator ──
 function setRoundActive(active) {
   S.questionActive = active;
   const badge   = document.getElementById('roundActiveBadge');
@@ -1258,42 +1259,30 @@ function setRoundActive(active) {
     nextBtn.disabled = false;
   } else {
     badge.classList.remove('visible');
-    const exhausted = S.currentQIndex >= S.questions.length - 1;
-    nextBtn.disabled = exhausted;
+    nextBtn.disabled = S.currentQIndex >= S.questions.length - 1;
   }
   updateNextBtnText();
 }
 
-/* ════════════════════════════════════════
-   7. PARTICIPANT BUZZ STATE MACHINE
-════════════════════════════════════════ */
+/* ── Countdown state machine ── */
 function clearCountdownTimer() {
-  if (S.countdownTimer) {
-    clearInterval(S.countdownTimer);
-    S.countdownTimer = null;
-  }
+  if (S.countdownTimer) { clearInterval(S.countdownTimer); S.countdownTimer = null; }
 }
 
 function setBuzzState(state, statusText, statusClass = '') {
   if (!BUZZ_STATES.includes(state)) return;
   S.buzzState = state;
-
   const btn    = document.getElementById('buzzBtn');
   const status = document.getElementById('buzzStatus');
   const ring   = document.getElementById('countdownSvg');
   const circle = document.getElementById('countdownCircle');
-
-  if (state !== 'countdown') {
-    clearCountdownTimer();
-  }
-
-  btn.className = `buzz-btn ${state}`;
-  btn.disabled  = (state !== 'ready');
+  if (state !== 'countdown') clearCountdownTimer();
+  btn.className      = `buzz-btn ${state}`;
+  btn.disabled       = (state !== 'ready');
   status.textContent = statusText;
   status.className   = `buzz-status ${statusClass}`;
-
   if (state === 'countdown') {
-    ring.style.display = 'block';
+    ring.style.display  = 'block';
     circle.style.stroke = 'var(--accent3)';
   } else {
     ring.style.display = 'none';
@@ -1301,36 +1290,26 @@ function setBuzzState(state, statusText, statusClass = '') {
   }
 }
 
-/** Start visual countdown then flip to ready */
 function startCountdown(seconds) {
   if (S.countdownTimer) return;
   clearCountdownTimer();
-
-  if (seconds <= 0) {
-    setBuzzState('ready', '⚡ Tap to buzz in!');
-    return;
-  }
-
+  if (seconds <= 0) { setBuzzState('ready', '⚡ Tap to buzz in!'); return; }
   setBuzzState('countdown', `Get ready... ${seconds}`, '');
-  const btn = document.getElementById('buzzBtn');
+  const btn    = document.getElementById('buzzBtn');
   btn.textContent = seconds;
-
   S.countdownRemaining = seconds;
   const circle = document.getElementById('countdownCircle');
   const total  = seconds * 1000;
   const start  = Date.now();
-
   S.countdownTimer = setInterval(() => {
     const elapsed  = Date.now() - start;
     const progress = Math.min(elapsed / total, 1);
     circle.style.strokeDashoffset = COUNTDOWN_CIRCUMFERENCE * (1 - progress);
-
     const remaining = Math.ceil((total - elapsed) / 1000);
     if (remaining !== S.countdownRemaining) {
       S.countdownRemaining = remaining;
       btn.textContent = remaining > 0 ? remaining : 'BUZZ!';
     }
-
     if (progress >= 1) {
       clearCountdownTimer();
       btn.textContent = 'BUZZ!';
@@ -1339,40 +1318,26 @@ function startCountdown(seconds) {
   }, 50);
 }
 
-/* ════════════════════════════════════════
-   8. EVENT HANDLERS
-════════════════════════════════════════ */
-
+/* ── Event handlers ── */
 window.showHostSetup = function() {
-  // Reset draft list each time modal opens
   S.questionDraftList = [];
   document.getElementById('questionEntryLabel').textContent = 'Question 1';
   document.getElementById('questionCountHint').textContent  = '0 questions added';
   const ta = document.getElementById('singleQuestionInput');
-  ta.value = '';
-  ta.style.height = 'auto';
+  ta.value = ''; ta.style.height = 'auto';
   document.getElementById('hostRoomCode').value = 'BUZZ' + (10 + Math.floor(Math.random() * 90));
   document.getElementById('hostSetupModal').classList.add('open');
-
-  // No keyboard shortcut — Enter creates a new line naturally.
-  // The only way to add a question is the + button.
   ta.onkeydown = null;
-
-  // Auto-grow textarea as user types
-  ta.oninput = function() {
-    this.style.height = 'auto';
-    this.style.height = this.scrollHeight + 'px';
-  };
-
+  ta.oninput = function() { this.style.height = 'auto'; this.style.height = this.scrollHeight + 'px'; };
   setTimeout(() => ta.focus(), 50);
 };
+
 window.addQuestion = function() {
   const ta  = document.getElementById('singleQuestionInput');
   const val = ta.value.trim();
   if (!val) return;
   S.questionDraftList.push(val);
-  ta.value = '';
-  ta.style.height = 'auto'; // reset height after clearing
+  ta.value = ''; ta.style.height = 'auto';
   const count = S.questionDraftList.length;
   document.getElementById('questionEntryLabel').textContent = `Question ${count + 1}`;
   document.getElementById('questionCountHint').textContent  = `${count} question${count !== 1 ? 's' : ''} added`;
@@ -1392,64 +1357,39 @@ window.startHostSession = function() {
   const delay = parseInt(document.getElementById('buzzDelay').value) || 0;
   const qs    = S.questionDraftList;
   const errEl = document.getElementById('hostError');
-
   if (!code || qs.length === 0) { errEl.classList.add('visible'); return; }
   errEl.classList.remove('visible');
-
-  S.roomCode       = code;
-  S.questions      = qs.slice(); // copy
-  S.isHost         = true;
-  S.buzzDelay      = delay;
-  S.currentQIndex  = -1;
-  S.questionActive = false;
-
+  S.roomCode = code; S.questions = qs.slice(); S.isHost = true;
+  S.buzzDelay = delay; S.currentQIndex = -1; S.questionActive = false;
   DB.createRoom({
-    host:             true,
-    buzzDelay:        delay,
-    currentQuestion:  null,
-    currentQIndex:    -1,
-    totalQuestions:   qs.length,
-    buzzer:           null,
-    buzzLocked:       false,
-    status:           'active',
-    hostOnline:       true,
-    createdAt:        Date.now(),
+    host: true, buzzDelay: delay, currentQuestion: null, currentQIndex: -1,
+    totalQuestions: qs.length, buzzer: null, buzzLocked: false,
+    status: 'active', hostOnline: true, createdAt: Date.now(),
   });
-
   onDisconnect(ref(S.db, `rooms/${S.roomCode}/hostOnline`)).set(false);
-
   saveHostSession();
-
   document.getElementById('sidebarRoomCode').textContent = code;
   document.getElementById('totalQNum').textContent       = qs.length;
   document.getElementById('currentQNum').textContent     = '—';
-
   closeModal('hostSetupModal');
   showScreen('host');
   listenAsHost();
 };
 
 window.nextQuestion = function() {
-  // FIX: Only block if there's an active buzz winner; allow skipping active questions
   if (S.buzzWinnerId) return;
-
   const next = S.currentQIndex + 1;
   if (next >= S.questions.length) return;
-
   S.currentQIndex = next;
   const q = S.questions[next];
-
   S.buzzWinnerId = null;
   hostHideWinner();
-
   DB.setQuestion(q, next);
-
   document.getElementById('hostNoQuestion').style.display      = 'none';
   document.getElementById('hostQuestionContent').style.display = 'block';
   document.getElementById('hostQBadge').textContent  = `Q${next + 1}`;
   document.getElementById('hostQuestionText').textContent = q;
   document.getElementById('currentQNum').textContent = next + 1;
-
   setRoundActive(true);
   saveHostSession();
 };
@@ -1468,70 +1408,49 @@ window.awardPoint = function() {
   S.scoresCache[S.buzzWinnerId].points = currentScore + 1;
   renderParticipantList();
   hostHideWinner();
+  // Advance to next question after awarding
+  const next = S.currentQIndex + 1;
+  if (next < S.questions.length) nextQuestion();
 };
 
 window.endSession = function() {
   if (!confirm('End the session? All participants will be disconnected.')) return;
-  DB.endRoom().then(() => {
-    localStorage.removeItem('buzzcode_session');
-    location.reload();
-  });
+  DB.endRoom().then(() => { localStorage.removeItem('buzzcode_session'); location.reload(); });
 };
 
 window.joinParticipantSession = function() {
-  const code = document.getElementById('participantRoomCode').value.trim().toUpperCase();
-  const name = document.getElementById('participantName').value.trim();
+  const code  = document.getElementById('participantRoomCode').value.trim().toUpperCase();
+  const name  = document.getElementById('participantName').value.trim();
   const errEl = document.getElementById('participantError');
-
   if (!code || !name) { errEl.classList.add('visible'); return; }
   errEl.classList.remove('visible');
-
-  S.roomCode = code;
-  S.myName   = name;
-  S.myAvatar = rand(AVATARS);
-  S.myColor  = rand(COLORS);
+  S.roomCode = code; S.myName = name;
+  S.myAvatar = rand(AVATARS); S.myColor = rand(COLORS);
   const savedId = localStorage.getItem(`buzzcode_pid_${code}`);
   S.myId = savedId || ('p_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7));
   localStorage.setItem(`buzzcode_pid_${code}`, S.myId);
-
   DB.registerParticipant();
   DB.registerDisconnect();
   saveParticipantSession();
-
   const av = document.getElementById('myAvatarDisplay');
-  av.textContent       = S.myAvatar;
-  av.style.background  = S.myColor + '22';
-  av.style.color       = S.myColor;
-  av.style.borderColor = S.myColor + '44';
+  av.textContent = S.myAvatar; av.style.background = S.myColor + '22';
+  av.style.color = S.myColor; av.style.borderColor = S.myColor + '44';
   document.getElementById('myNameDisplay').textContent = S.myName;
   document.getElementById('myRoomBadge').textContent   = S.roomCode;
-
   closeModal('participantSetupModal');
   showScreen('participant');
   listenAsParticipant();
 };
 
-/** Participant presses the buzz button */
 window.buzz = function() {
   if (S.buzzState !== 'ready') return;
-  S.buzzState = 'locked'; // immediate local lock
+  S.buzzState = 'locked';
   setBuzzState('buzzing', 'Sending…');
   vibrateDevice();
-
   DB.claimBuzzer()
-    .then(result => {
-      if (!result.committed) {
-        setBuzzState('locked', 'Too slow! Someone else buzzed');
-      }
-    })
-    .catch(() => {
-      setBuzzState('ready', '⚡ Tap to buzz in!');
-    });
+    .then(result => { if (!result.committed) setBuzzState('locked', 'Too slow! Someone else buzzed'); })
+    .catch(() => setBuzzState('ready', '⚡ Tap to buzz in!'));
 };
-
-/* ════════════════════════════════════════
-   9. SESSION / ROOM MANAGEMENT
-════════════════════════════════════════ */
 
 window.leaveRoom = function() {
   localStorage.removeItem('buzzcode_session');
@@ -1539,92 +1458,71 @@ window.leaveRoom = function() {
   location.reload();
 };
 
-/* ════════════════════════════════════════
-   10. REALTIME LISTENERS
-════════════════════════════════════════ */
+/* ── Realtime listeners ── */
 function listenAsHost() {
-  DB.onParticipants(data => {
-    S.participantsCache = data;
-    renderParticipantList(data, S.scoresCache);
-  });
-
-  DB.onScores(data => {
-    S.scoresCache = data;
-    renderParticipantList(S.participantsCache, data);
-  });
-
+  DB.onParticipants(data => { S.participantsCache = data; renderParticipantList(data, S.scoresCache); });
+  DB.onScores(data => { S.scoresCache = data; renderParticipantList(S.participantsCache, data); });
   DB.onRoom(data => {
-  if (!data) return;
-
-  if (data.currentQIndex !== S.currentQIndex) {
-    S.currentQIndex = data.currentQIndex || -1;
-
-    if (data.currentQuestion) {
-      document.getElementById('hostNoQuestion').style.display = 'none';
-      document.getElementById('hostQuestionContent').style.display = 'block';
-      document.getElementById('hostQBadge').textContent = `Q${S.currentQIndex + 1}`;
-      document.getElementById('hostQuestionText').textContent = data.currentQuestion;
-      document.getElementById('currentQNum').textContent = S.currentQIndex + 1;
+    if (!data) return;
+    if (data.currentQIndex !== S.currentQIndex) {
+      S.currentQIndex = data.currentQIndex || -1;
+      if (data.currentQuestion) {
+        document.getElementById('hostNoQuestion').style.display = 'none';
+        document.getElementById('hostQuestionContent').style.display = 'block';
+        document.getElementById('hostQBadge').textContent = `Q${S.currentQIndex + 1}`;
+        document.getElementById('hostQuestionText').textContent = data.currentQuestion;
+        document.getElementById('currentQNum').textContent = S.currentQIndex + 1;
+      }
     }
-  }
-
-  if (data.buzzer && S.buzzWinnerId !== data.buzzer.id) {
-        hostShowWinner(data.buzzer);
+    if (data.buzzer && S.buzzWinnerId !== data.buzzer.id) {
+      hostShowWinner(data.buzzer);
     } else if (!data.buzzer && S.buzzWinnerId) {
-    hostHideWinner();
-  }
-});
+      hostHideWinner();
+    }
+  });
 }
 
 function listenAsParticipant() {
   DB.onRoom(data => {
     if (S.gameEnded) return;
-
     if (!data || data.status === 'ended') {
       if (!S.gameEnded) {
         S.gameEnded = true;
         clearCountdownTimer();
         setBuzzState('idle', 'Game over');
+        participantHideWinner();
         showGameOver();
       }
       return;
     }
-
-    if (data.hostOnline === false) {
-      setBuzzState('idle', 'Host reconnecting…');
-      return;
-    }
+    if (data.hostOnline === false) { setBuzzState('idle', 'Host reconnecting…'); return; }
 
     const q      = data.currentQuestion;
     const buzzer = data.buzzer;
     const delay  = data.buzzDelay || 0;
-    const notif  = document.getElementById('buzzedNotification');
     const myScore = (data.scores?.[S.myId]?.points) || 0;
     document.getElementById('myScoreBadge').textContent = `⭐ ${myScore} pts`;
 
     // Question display
     if (q) {
-      document.getElementById('participantWaiting').style.display      = 'none';
-      document.getElementById('participantQuestionText').style.display  = 'block';
-      document.getElementById('participantQuestionText').textContent    = q;
+      document.getElementById('participantWaiting').style.display     = 'none';
+      document.getElementById('participantQuestionText').style.display = 'block';
+      document.getElementById('participantQuestionText').textContent   = q;
     } else {
-      document.getElementById('participantWaiting').style.display      = 'block';
-      document.getElementById('participantQuestionText').style.display  = 'none';
+      document.getElementById('participantWaiting').style.display     = 'block';
+      document.getElementById('participantQuestionText').style.display = 'none';
     }
 
-    // ── Buzzer FSM transitions ──
     if (!q) {
       clearCountdownTimer();
       setBuzzState('idle', 'Waiting for question…');
-      notif.classList.remove('visible');
+      participantHideWinner();
       return;
     }
 
     if (buzzer) {
       const isMe = buzzer.id === S.myId;
-      notif.classList.add('visible');
-      document.getElementById('buzzedWho').textContent = isMe ? 'You! 🎉' : buzzer.name;
-
+      participantShowWinner(buzzer, isMe);
       if (isMe) {
         clearCountdownTimer();
         setBuzzState('buzzing', '🎉 You buzzed first!', 'won');
@@ -1635,30 +1533,22 @@ function listenAsParticipant() {
       return;
     }
 
-    // No buzzer, question is live
-    notif.classList.remove('visible');
+    // No buzzer — hide winner overlay if it was visible
+    participantHideWinner();
 
     const serverRoundId = data.roundId;
-
-    if (!buzzer && S.buzzState === 'locked') {
-        startCountdown(delay);
-        return;
-        }
-
-        if (serverRoundId && serverRoundId !== S.lastSeenRoundId) {
-        S.lastSeenRoundId = serverRoundId;
-        startCountdown(delay);
-        }
+    if (!buzzer && S.buzzState === 'locked') { startCountdown(delay); return; }
+    if (serverRoundId && serverRoundId !== S.lastSeenRoundId) {
+      S.lastSeenRoundId = serverRoundId;
+      startCountdown(delay);
+    }
   });
 }
 
-/* ════════════════════════════════════════
-   11. GAME OVER UI (participant)
-════════════════════════════════════════ */
+/* ── Game Over ── */
 function showGameOver() {
   localStorage.removeItem('buzzcode_session');
   localStorage.removeItem(`buzzcode_pid_${S.roomCode}`);
-
   const overlay = document.getElementById('gameOverOverlay');
   const scoreEl = document.getElementById('gameOverScore');
   const myScore = parseInt(
@@ -1668,48 +1558,31 @@ function showGameOver() {
   overlay.classList.add('visible');
 }
 
-/* ════════════════════════════════════════
-   12. SESSION PERSISTENCE
-════════════════════════════════════════ */
+/* ── Session persistence ── */
 function saveHostSession() {
   localStorage.setItem('buzzcode_session', JSON.stringify({
-    role:        'host',
-    roomCode:    S.roomCode,
-    questions:   S.questions,
-    buzzDelay:   S.buzzDelay,
-    qIndex:      S.currentQIndex,
+    role: 'host', roomCode: S.roomCode, questions: S.questions,
+    buzzDelay: S.buzzDelay, qIndex: S.currentQIndex,
   }));
 }
-
 function saveParticipantSession() {
   localStorage.setItem('buzzcode_session', JSON.stringify({
-    role:     'participant',
-    roomCode: S.roomCode,
-    myId:     S.myId,
-    myName:   S.myName,
-    myAvatar: S.myAvatar,
-    myColor:  S.myColor,
+    role: 'participant', roomCode: S.roomCode, myId: S.myId,
+    myName: S.myName, myAvatar: S.myAvatar, myColor: S.myColor,
   }));
 }
-
 function tryRestoreSession() {
   const raw = localStorage.getItem('buzzcode_session');
   if (!raw) return false;
   try {
     const sess = JSON.parse(raw);
     if (!sess || !sess.role) return false;
-
     if (sess.role === 'host') {
-      S.roomCode      = sess.roomCode;
-      S.questions     = sess.questions;
-      S.buzzDelay     = sess.buzzDelay || 0;
-      S.currentQIndex = sess.qIndex ?? -1;
-      S.isHost        = true;
-
+      S.roomCode = sess.roomCode; S.questions = sess.questions;
+      S.buzzDelay = sess.buzzDelay || 0; S.currentQIndex = sess.qIndex ?? -1; S.isHost = true;
       document.getElementById('sidebarRoomCode').textContent = S.roomCode;
       document.getElementById('totalQNum').textContent       = S.questions.length;
       document.getElementById('currentQNum').textContent     = S.currentQIndex >= 0 ? S.currentQIndex + 1 : '—';
-
       if (S.currentQIndex >= 0) {
         const q = S.questions[S.currentQIndex];
         document.getElementById('hostNoQuestion').style.display      = 'none';
@@ -1717,79 +1590,40 @@ function tryRestoreSession() {
         document.getElementById('hostQBadge').textContent   = `Q${S.currentQIndex + 1}`;
         document.getElementById('hostQuestionText').textContent = q;
       }
-
       update(ref(S.db, `rooms/${S.roomCode}`), { hostOnline: true });
       onDisconnect(ref(S.db, `rooms/${S.roomCode}/hostOnline`)).set(false);
-
-      showScreen('host');
-      listenAsHost();
-      return true;
+      showScreen('host'); listenAsHost(); return true;
     }
-
     if (sess.role === 'participant') {
-      S.roomCode = sess.roomCode;
-      S.myId     = sess.myId;
-      S.myName   = sess.myName;
-      S.myAvatar = sess.myAvatar;
-      S.myColor  = sess.myColor;
-
-      DB.registerParticipant();
-      DB.registerDisconnect();
-
+      S.roomCode = sess.roomCode; S.myId = sess.myId; S.myName = sess.myName;
+      S.myAvatar = sess.myAvatar; S.myColor = sess.myColor;
+      DB.registerParticipant(); DB.registerDisconnect();
       const av = document.getElementById('myAvatarDisplay');
-      av.textContent       = S.myAvatar;
-      av.style.background  = S.myColor + '22';
-      av.style.color       = S.myColor;
-      av.style.borderColor = S.myColor + '44';
+      av.textContent = S.myAvatar; av.style.background = S.myColor + '22';
+      av.style.color = S.myColor; av.style.borderColor = S.myColor + '44';
       document.getElementById('myNameDisplay').textContent = S.myName;
       document.getElementById('myRoomBadge').textContent   = S.roomCode;
-
-      showScreen('participant');
-      listenAsParticipant();
-      return true;
+      showScreen('participant'); listenAsParticipant(); return true;
     }
   } catch(e) {}
   return false;
 }
 
-/* ════════════════════════════════════════
-   13. UTILITY FUNCTIONS
-════════════════════════════════════════ */
 function escHtml(str) {
-  return String(str)
-    .replace(/&/g,'&amp;')
-    .replace(/</g,'&lt;')
-    .replace(/>/g,'&gt;')
-    .replace(/"/g,'&quot;');
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-/* ════════════════════════════════════════
-   14. APP BOOTSTRAP
-════════════════════════════════════════ */
+/* ── Bootstrap ── */
 (function boot() {
   let cfg = null;
-
   const saved = localStorage.getItem('buzzcode_firebase_config');
-  if (saved) {
-    try { cfg = JSON.parse(saved); } catch(e) {}
-  }
-
+  if (saved) { try { cfg = JSON.parse(saved); } catch(e) {} }
   if (!cfg || !cfg.databaseURL) {
-    if (!isDefaultConfig(DEFAULT_FIREBASE_CONFIG)) {
-      cfg = DEFAULT_FIREBASE_CONFIG;
-    }
+    if (!isDefaultConfig(DEFAULT_FIREBASE_CONFIG)) cfg = DEFAULT_FIREBASE_CONFIG;
   }
-
-  if (!cfg || !cfg.databaseURL || isDefaultConfig(cfg)) {
-    showScreen('config-screen');
-    return;
-  }
-
+  if (!cfg || !cfg.databaseURL || isDefaultConfig(cfg)) { showScreen('config-screen'); return; }
   initFirebase(cfg);
-
-  if (!tryRestoreSession()) {
-    showScreen('landing');
-  }
+  if (!tryRestoreSession()) showScreen('landing');
 })();
 </script>
 </body>
