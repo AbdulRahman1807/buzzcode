@@ -170,12 +170,25 @@
   .question-entry-row {
     display: flex;
     gap: 10px;
-    align-items: stretch;
+    align-items: flex-end;
   }
-  .question-entry-row input {
+  .question-entry-row textarea {
     flex: 1;
     min-width: 0;
+    resize: none;
+    overflow: hidden;
+    line-height: 1.5;
+    font-family: var(--font-body);
+    font-size: 16px;
+    padding: 14px 18px;
+    background: var(--surface2);
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.2s;
   }
+  .question-entry-row textarea:focus { border-color: var(--accent); }
   .btn-add-q {
     flex-shrink: 0;
     width: 48px; height: 52px;
@@ -185,6 +198,8 @@
     cursor: pointer; transition: all 0.2s;
     display: flex; align-items: center; justify-content: center;
     line-height: 1;
+    /* stay anchored to bottom of textarea when it grows */
+    align-self: flex-end;
   }
   .btn-add-q:hover { transform: scale(1.08); box-shadow: 0 4px 16px #7b2fff55; }
   .btn-add-q:active { transform: scale(0.96); }
@@ -752,7 +767,8 @@
     <div class="field">
       <label id="questionEntryLabel">Question 1</label>
       <div class="question-entry-row">
-        <input type="text" id="singleQuestionInput" placeholder="Type a question and press + or Enter…">
+        <textarea id="singleQuestionInput" rows="3"
+          placeholder="Type a question… (use + to add)"></textarea>
         <button class="btn-add-q" onclick="addQuestion()" title="Add question">+</button>
       </div>
       <div class="hint" id="questionCountHint">0 questions added</div>
@@ -1293,24 +1309,35 @@ window.showHostSetup = function() {
   S.questionDraftList = [];
   document.getElementById('questionEntryLabel').textContent = 'Question 1';
   document.getElementById('questionCountHint').textContent  = '0 questions added';
-  document.getElementById('singleQuestionInput').value      = '';
+  const ta = document.getElementById('singleQuestionInput');
+  ta.value = '';
+  ta.style.height = 'auto';
   document.getElementById('hostRoomCode').value = 'BUZZ' + (10 + Math.floor(Math.random() * 90));
   document.getElementById('hostSetupModal').classList.add('open');
-  // Bind Enter key on the question input
-  const inp = document.getElementById('singleQuestionInput');
-  inp.onkeydown = (e) => { if (e.key === 'Enter') { e.preventDefault(); addQuestion(); } };
-};
 
+  // No keyboard shortcut — Enter creates a new line naturally.
+  // The only way to add a question is the + button.
+  ta.onkeydown = null;
+
+  // Auto-grow textarea as user types
+  ta.oninput = function() {
+    this.style.height = 'auto';
+    this.style.height = this.scrollHeight + 'px';
+  };
+
+  setTimeout(() => ta.focus(), 50);
+};
 window.addQuestion = function() {
-  const inp = document.getElementById('singleQuestionInput');
-  const val = inp.value.trim();
+  const ta  = document.getElementById('singleQuestionInput');
+  const val = ta.value.trim();
   if (!val) return;
   S.questionDraftList.push(val);
-  inp.value = '';
+  ta.value = '';
+  ta.style.height = 'auto'; // reset height after clearing
   const count = S.questionDraftList.length;
   document.getElementById('questionEntryLabel').textContent = `Question ${count + 1}`;
   document.getElementById('questionCountHint').textContent  = `${count} question${count !== 1 ? 's' : ''} added`;
-  inp.focus();
+  ta.focus();
 };
 
 window.showParticipantSetup = function() {
@@ -1367,10 +1394,6 @@ window.nextQuestion = function() {
   // FIX: Only block if there's an active buzz winner; allow skipping active questions
   if (S.buzzWinnerId) return;
 
-  setRoundActive(false);
-
-  clearCountdownTimer?.();
-
   const next = S.currentQIndex + 1;
   if (next >= S.questions.length) return;
 
@@ -1390,13 +1413,6 @@ window.nextQuestion = function() {
 
   setRoundActive(true);
   saveHostSession();
-
-  const nextBtn = document.getElementById('nextQBtn');
-  if (next >= S.questions.length - 1) {
-    nextBtn.textContent = 'No More Questions';
-  } else {
-    nextBtn.textContent = 'Next Question →';
-  }
 };
 
 window.resetBuzz = function() {
@@ -1583,8 +1599,6 @@ function listenAsParticipant() {
     // No buzzer, question is live
     notif.classList.remove('visible');
 
-    // FIX 2: Only start countdown when a genuinely NEW question index is seen,
-    // preventing re-triggers from repeated onValue fires for the same question.
     const serverRoundId = data.roundId;
 
     if (!buzzer && S.buzzState === 'locked') {
@@ -1603,7 +1617,6 @@ function listenAsParticipant() {
    11. GAME OVER UI (participant)
 ════════════════════════════════════════ */
 function showGameOver() {
-  // FIX 3: Clear session data so a page refresh doesn't attempt to rejoin a dead room
   localStorage.removeItem('buzzcode_session');
   localStorage.removeItem(`buzzcode_pid_${S.roomCode}`);
 
