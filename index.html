@@ -1377,13 +1377,14 @@ window.startHostSession = function() {
 };
 
 window.nextQuestion = function() {
-  if (S.buzzWinnerId) return;
+  // Clear any winner state first — this button is also called from inside the winner overlay
+  S.buzzWinnerId = null;
+  hostHideWinner();
+
   const next = S.currentQIndex + 1;
   if (next >= S.questions.length) return;
   S.currentQIndex = next;
   const q = S.questions[next];
-  S.buzzWinnerId = null;
-  hostHideWinner();
   DB.setQuestion(q, next);
   document.getElementById('hostNoQuestion').style.display      = 'none';
   document.getElementById('hostQuestionContent').style.display = 'block';
@@ -1407,10 +1408,9 @@ window.awardPoint = function() {
   if (!S.scoresCache[S.buzzWinnerId]) S.scoresCache[S.buzzWinnerId] = { points: 0 };
   S.scoresCache[S.buzzWinnerId].points = currentScore + 1;
   renderParticipantList();
+  // Just close the overlay — host can decide when to move to next question
+  S.buzzWinnerId = null;
   hostHideWinner();
-  // Advance to next question after awarding
-  const next = S.currentQIndex + 1;
-  if (next < S.questions.length) nextQuestion();
 };
 
 window.endSession = function() {
