@@ -1415,6 +1415,8 @@ window.awardPoint = function() {
 
 window.endSession = function() {
   if (!confirm('End the session? All participants will be disconnected.')) return;
+  S.sessionEnding = true;
+  hostHideWinner();
   DB.endRoom().then(() => { localStorage.removeItem('buzzcode_session'); location.reload(); });
 };
 
@@ -1463,7 +1465,7 @@ function listenAsHost() {
   DB.onParticipants(data => { S.participantsCache = data; renderParticipantList(data, S.scoresCache); });
   DB.onScores(data => { S.scoresCache = data; renderParticipantList(S.participantsCache, data); });
   DB.onRoom(data => {
-    if (!data) return;
+    if (!data || S.sessionEnding) return;
     if (data.currentQIndex !== S.currentQIndex) {
       S.currentQIndex = data.currentQIndex || -1;
       if (data.currentQuestion) {
