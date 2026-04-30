@@ -336,8 +336,18 @@
 
   .host-question-area {
     flex: 1; display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
-    padding: 60px 80px; position: relative; overflow: hidden;
+    align-items: center; justify-content: flex-start;
+    /* padding-top provides top breathing room; bottom is handled by ::after spacer.
+       overflow: hidden → overflow-y: auto so long questions are scrollable.
+       min-height: 0 lets this flex child shrink and hand scroll to overflow-y. */
+    padding: 60px 80px 0; position: relative;
+    overflow-y: auto; min-height: 0;
+  }
+  /* Bottom spacer: acts like the bottom half of justify-content:center for short
+     questions, but collapses to min-height when content is tall, keeping scroll
+     anchored at the top so nothing is clipped. */
+  .host-question-area::after {
+    content: ''; flex: 1; min-height: 60px; width: 100%;
   }
   .host-question-area::before {
     content: ''; position: absolute; inset: 0;
@@ -352,6 +362,7 @@
     font-size: clamp(24px, 3vw, 42px); font-weight: 800;
     text-align: center; line-height: 1.4; max-width: 900px;
     z-index: 1; animation: fadeUp 0.5s ease;
+    white-space: pre-wrap;
   }
   @keyframes fadeUp {
     from { opacity: 0; transform: translateY(24px); }
@@ -438,17 +449,44 @@
     padding: 6px 14px; border-radius: 8px; letter-spacing: 2px;
   }
 
+  /* ─────────────────────────────────────
+     FIX: Participant question area
+
+     Root cause: `align-items: center` on a flex container with `overflow-y: auto`
+     causes the child to overflow both top AND bottom symmetrically, so the browser
+     cannot scroll to reveal the clipped edges — you only ever see the middle.
+
+     Fix: switch to a column-direction flex with ::before / ::after spacers.
+     The spacers each have `flex: 1`, so they share leftover space equally,
+     centering the content when the question is short. When the question is tall
+     enough to consume all the space, the spacers shrink to their min-height (40px
+     of breathing room) and the container becomes scrollable from the top — the full
+     question is now reachable.
+
+     `min-height: 0` is required so this flex child can shrink below its content
+     size and hand scroll control back to its own overflow-y.
+  ───────────────────────────────────── */
   .participant-question-area {
-    flex: 1; width: 100%;
-    display: flex; align-items: center; justify-content: center;
-    padding: 40px 24px; text-align: center; overflow-y: auto;
+    flex: 1; width: 100%; min-height: 0;
+    display: flex; flex-direction: column; align-items: center;
+    padding: 0 24px; text-align: center; overflow-y: auto;
   }
+  .participant-question-area::before,
+  .participant-question-area::after {
+    content: ''; flex: 1; min-height: 40px; width: 100%;
+  }
+
   .participant-question-text {
     font-size: clamp(18px, 4vw, 32px); font-weight: 700;
     line-height: 1.5; max-width: 600px; animation: fadeUp 0.4s ease;
-    white-space: pre-line;
+    white-space: pre-wrap;
+    /* Ensure the text itself doesn't shrink to nothing */
+    flex-shrink: 0;
   }
-  .waiting-text { color: var(--text-muted); font-size: 18px; }
+  .waiting-text {
+    color: var(--text-muted); font-size: 18px;
+    flex-shrink: 0;
+  }
   .waiting-text .dots::after { content: ''; animation: dots 1.5s infinite; }
   @keyframes dots {
     0%   { content: ''; }
