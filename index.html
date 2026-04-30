@@ -1701,8 +1701,7 @@ window.endSession = function() {
   if (!confirm('End the session? All participants will be disconnected.')) return;
   S.sessionEnding = true;
   hostHideWinner();
-  localStorage.removeItem('buzzcode_session');
-  localStorage.removeItem(`buzzcode_pid_${S.roomCode}`);
+  clearSession(S.roomCode);
   DB.endRoom().then(() => { location.reload(); });
 };
 
@@ -1741,8 +1740,7 @@ window.buzz = function() {
 };
 
 window.leaveRoom = function() {
-  localStorage.removeItem('buzzcode_session');
-  localStorage.removeItem(`buzzcode_pid_${S.roomCode}`);
+  clearSession(S.roomCode);
   location.reload();
 };
 
@@ -1782,9 +1780,7 @@ function listenAsParticipant() {
         clearCountdownTimer();
         setBuzzState('idle', 'Game over');
         participantHideWinner();
-        // Clear localStorage immediately on game end
-        localStorage.removeItem('buzzcode_session');
-        localStorage.removeItem(`buzzcode_pid_${S.roomCode}`);
+        clearSession(S.roomCode);
         showGameOver();
       }
       return;
@@ -1853,18 +1849,39 @@ function showGameOver() {
 
 /* ─────────────────────────────────────
    Session persistence
+   
+   How tab-close detection works:
+   - On save, we write a random token to BOTH localStorage and sessionStorage
+   - sessionStorage is automatically wiped when the tab closes (browser-native)
+   - On boot, if localStorage has a session but sessionStorage token doesn't
+     match, the tab was closed → treat session as stale and discard it
+   - No beforeunload needed; this works on mobile too
 ───────────────────────────────────── */
+function makeSessionToken() {
+  return Math.random().toString(36).slice(2) + Date.now().toString(36);
+}
+
 function saveHostSession() {
+  const token = makeSessionToken();
+  sessionStorage.setItem('buzzcode_tab_token', token);
   localStorage.setItem('buzzcode_session', JSON.stringify({
     role: 'host', roomCode: S.roomCode, questions: S.questions,
-    buzzDelay: S.buzzDelay, qIndex: S.currentQIndex,
+    buzzDelay: S.buzzDelay, qIndex: S.currentQIndex, token,
   }));
 }
 function saveParticipantSession() {
+  const token = makeSessionToken();
+  sessionStorage.setItem('buzzcode_tab_token', token);
   localStorage.setItem('buzzcode_session', JSON.stringify({
     role: 'participant', roomCode: S.roomCode, myId: S.myId,
-    myName: S.myName, myAvatar: S.myAvatar, myColor: S.myColor,
+    myName: S.myName, myAvatar: S.myAvatar, myColor: S.myColor, token,
   }));
+}
+
+function clearSession(roomCode) {
+  localStorage.removeItem('buzzcode_session');
+  sessionStorage.removeItem('buzzcode_tab_token');
+  if (roomCode) localStorage.removeItem(`buzzcode_pid_${roomCode}`);
 }
 
 async function tryRestoreSession() {
@@ -1874,19 +1891,25 @@ async function tryRestoreSession() {
     const sess = JSON.parse(raw);
     if (!sess || !sess.role || !sess.roomCode) return false;
 
-    // Verify room still exists in Firebase
-    const tempRoomCode = S.roomCode;
+    // ── Tab-close guard ──────────────────────────────────────────
+    // If the token in localStorage doesn't match what's in sessionStorage,
+    // this tab was closed and reopened (or a different tab). Discard.
+    const tabToken = sessionStorage.getItem('buzzcode_tab_token');
+    if (!tabToken || tabToken !== sess.token) {
+      clearSession(sess.roomCode);
+      return false;
+    }
+
+    // ── Firebase room existence check ────────────────────────────
     S.roomCode = sess.roomCode;
     const exists = await DB.checkRoomExists();
     if (!exists) {
-      S.roomCode = tempRoomCode;
-      localStorage.removeItem('buzzcode_session');
-      localStorage.removeItem(`buzzcode_pid_${sess.roomCode}`);
+      clearSession(sess.roomCode);
       return false;
     }
 
     if (sess.role === 'host') {
-      S.roomCode = sess.roomCode; S.questions = (sess.questions || []).map(normaliseQuestion);
+      S.questions = (sess.questions || []).map(normaliseQuestion);
       S.buzzDelay = sess.buzzDelay || 0; S.currentQIndex = sess.qIndex ?? -1; S.isHost = true;
       document.getElementById('sidebarRoomCode').textContent = S.roomCode;
       document.getElementById('totalQNum').textContent       = S.questions.length;
@@ -1903,7 +1926,7 @@ async function tryRestoreSession() {
       showScreen('host'); listenAsHost(); return true;
     }
     if (sess.role === 'participant') {
-      S.roomCode = sess.roomCode; S.myId = sess.myId; S.myName = sess.myName;
+      S.myId = sess.myId; S.myName = sess.myName;
       S.myAvatar = sess.myAvatar; S.myColor = sess.myColor;
       DB.registerParticipant(); DB.registerDisconnect();
       const av = document.getElementById('myAvatarDisplay');
@@ -1916,19 +1939,6 @@ async function tryRestoreSession() {
   } catch(e) {}
   return false;
 }
-
-/* ─────────────────────────────────────
-   Tab close / refresh cleanup
-───────────────────────────────────── */
-window.addEventListener('beforeunload', () => {
-  if (!S.roomCode) return;
-  // Clear session state so stale restore can't happen
-  localStorage.removeItem('buzzcode_session');
-  if (!S.isHost) {
-    localStorage.removeItem(`buzzcode_pid_${S.roomCode}`);
-  }
-  // Note: does NOT delete room — host closing tab shouldn't end session for others
-});
 
 /* ─────────────────────────────────────
    Utility
