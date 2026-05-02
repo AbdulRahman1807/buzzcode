@@ -929,8 +929,17 @@
       <div class="hint">Countdown before the buzzer activates after each question reveal.</div>
     </div>
 
-    <!-- Question builder -->
     <div class="field">
+      <label>Session Mode</label>
+      <div class="body-type-toggle">
+        <button class="btn-type active" id="btnModeQuiz" onclick="setSessionMode('quiz')">📝 Quiz (Pre-set Qs)</button>
+        <button class="btn-type" id="btnModeBuzzOnly" onclick="setSessionMode('buzzonly')">⚡ Buzz Only (Verbal)</button>
+      </div>
+      <div class="hint">"Buzz Only" lets you ask questions verbally without pre-entering them.</div>
+    </div>
+
+    <!-- Question builder -->
+    <div class="field" id="questionBuilderField">
       <label id="questionEntryLabel">Question 1</label>
       <div class="question-builder" id="questionBuilder">
         <!-- Title -->
@@ -1127,6 +1136,7 @@ const S = {
   participantsCache: {},
   scoresCache: {},
   sessionEnding: false,
+  isBuzzOnly: false,
   // draft state for question builder
   draftBodyType: 'text',
   draftImageBase64: null,
@@ -1248,6 +1258,22 @@ function resetQuestionBuilder() {
   document.getElementById('imagePreview').src = '';
   setBodyType('text');
 }
+
+window.setSessionMode = function(mode) {
+  S.isBuzzOnly = (mode === 'buzzonly');
+  document.getElementById('btnModeQuiz').classList.toggle('active', mode === 'quiz');
+  document.getElementById('btnModeBuzzOnly').classList.toggle('active', mode === 'buzzonly');
+  
+  const qBuilderField = document.getElementById('questionBuilderField');
+  if (S.isBuzzOnly) {
+    qBuilderField.style.opacity = '0.4';
+    qBuilderField.style.pointerEvents = 'none';
+    document.getElementById('hostError').classList.remove('visible');
+  } else {
+    qBuilderField.style.opacity = '1';
+    qBuilderField.style.pointerEvents = 'auto';
+  }
+};
 
 /* ─────────────────────────────────────
    Firebase init
@@ -1488,8 +1514,10 @@ function updateNextBtnText() {
   const nextBtn = document.getElementById('nextQBtn');
   if (!nextBtn) return;
   const exhausted = S.currentQIndex >= S.questions.length - 1;
-  if (exhausted) {
+  if (exhausted && !S.isBuzzOnly) {
     nextBtn.textContent = 'No More Questions';
+  } else if (S.isBuzzOnly) {
+    nextBtn.textContent = S.questionActive && !S.buzzWinnerId ? 'Skip Round →' : 'Next Round →';
   } else if (S.questionActive && !S.buzzWinnerId) {
     nextBtn.textContent = 'Skip Question →';
   } else {
@@ -1577,6 +1605,7 @@ window.showHostSetup = function() {
   document.getElementById('questionEntryLabel').textContent = 'Question 1';
   document.getElementById('questionCountHint').textContent  = '0 questions added';
   resetQuestionBuilder();
+  setSessionMode('quiz');
   document.getElementById('hostRoomCode').value = 'BUZZ' + (10 + Math.floor(Math.random() * 90));
   document.getElementById('hostSetupModal').classList.add('open');
   setTimeout(() => document.getElementById('qbTitle').focus(), 50);
@@ -1637,24 +1666,43 @@ window.startHostSession = function() {
   const delay = parseInt(document.getElementById('buzzDelay').value) || 0;
   const qs    = S.questionDraftList;
   const errEl = document.getElementById('hostError');
-  if (!code || qs.length === 0) {
-    errEl.textContent = 'Please fill in the room code and at least one question.';
+  
+  if (!code) {
+    errEl.textContent = 'Please enter a room code.';
     errEl.classList.add('visible');
     return;
   }
+  
+  if (!S.isBuzzOnly && qs.length === 0) {
+    errEl.textContent = 'Please add at least one question or switch to Buzz Only mode.';
+    errEl.classList.add('visible');
+    return;
+  }
+  
   errEl.classList.remove('visible');
   S.roomCode = code; S.questions = qs.slice(); S.isHost = true;
   S.buzzDelay = delay; S.currentQIndex = -1; S.questionActive = false;
+  
   DB.createRoom({
     host: true, buzzDelay: delay, currentQuestion: null, currentQIndex: -1,
-    totalQuestions: qs.length, buzzer: null, buzzLocked: false,
+    totalQuestions: S.isBuzzOnly ? 999 : qs.length, buzzer: null, buzzLocked: false,
     status: 'active', hostOnline: true, createdAt: Date.now(),
+    isBuzzOnly: S.isBuzzOnly
   });
   onDisconnect(ref(S.db, `rooms/${S.roomCode}/hostOnline`)).set(false);
   saveHostSession();
   document.getElementById('sidebarRoomCode').textContent = code;
-  document.getElementById('totalQNum').textContent       = qs.length;
-  document.getElementById('currentQNum').textContent     = '—';
+  
+  if (S.isBuzzOnly) {
+    document.querySelector('.question-counter').style.display = 'none';
+    document.getElementById('nextQBtn').textContent = 'Open Buzzer →';
+  } else {
+    document.querySelector('.question-counter').style.display = 'block';
+    document.getElementById('totalQNum').textContent = qs.length;
+    document.getElementById('currentQNum').textContent = '—';
+    document.getElementById('nextQBtn').textContent = 'Next Question →';
+  }
+  
   closeModal('hostSetupModal');
   showScreen('host');
   listenAsHost();
@@ -1663,6 +1711,20 @@ window.startHostSession = function() {
 window.nextQuestion = function() {
   S.buzzWinnerId = null;
   hostHideWinner();
+
+  if (S.isBuzzOnly) {
+    S.currentQIndex++;
+    const q = { title: `Round ${S.currentQIndex + 1}`, description: 'Ask your question verbally!', bodyType: 'text', body: 'Get ready to buzz!' };
+    DB.setQuestion(q, S.currentQIndex);
+    
+    document.getElementById('hostNoQuestion').style.display      = 'none';
+    document.getElementById('hostQuestionContent').style.display = 'block';
+    document.getElementById('hostQBadge').textContent  = `Round ${S.currentQIndex + 1}`;
+    renderQuestionInto(document.getElementById('hostQuestionDisplay'), q);
+    setRoundActive(true);
+    saveHostSession();
+    return;
+  }
 
   const next = S.currentQIndex + 1;
   if (next >= S.questions.length) return;
@@ -1759,9 +1821,11 @@ function listenAsHost() {
         const q = normaliseQuestion(data.currentQuestion);
         document.getElementById('hostNoQuestion').style.display      = 'none';
         document.getElementById('hostQuestionContent').style.display = 'block';
-        document.getElementById('hostQBadge').textContent  = `Q${S.currentQIndex + 1}`;
+        document.getElementById('hostQBadge').textContent  = S.isBuzzOnly ? `Round ${S.currentQIndex + 1}` : `Q${S.currentQIndex + 1}`;
         renderQuestionInto(document.getElementById('hostQuestionDisplay'), q);
-        document.getElementById('currentQNum').textContent = S.currentQIndex + 1;
+        if (!S.isBuzzOnly) {
+          document.getElementById('currentQNum').textContent = S.currentQIndex + 1;
+        }
       }
     }
     if (data.buzzer && S.buzzWinnerId !== data.buzzer.id) {
@@ -1769,6 +1833,9 @@ function listenAsHost() {
     } else if (!data.buzzer && S.buzzWinnerId) {
       hostHideWinner();
     }
+    
+    // Sync mode if restoring or late join
+    if (data.isBuzzOnly !== undefined) S.isBuzzOnly = data.isBuzzOnly;
   });
 }
 
@@ -1806,7 +1873,9 @@ function listenAsParticipant() {
 
     if (!q) {
       clearCountdownTimer();
-      setBuzzState('idle', 'Waiting for question…');
+      const msg = S.isBuzzOnly ? 'Waiting for next round…' : 'Waiting for question…';
+      setBuzzState('idle', msg);
+      document.getElementById('participantWaiting').innerHTML = (S.isBuzzOnly ? 'Waiting for host to start next round' : 'Waiting for host to reveal a question') + '<span class="dots"></span>';
       participantHideWinner();
       return;
     }
@@ -1823,6 +1892,8 @@ function listenAsParticipant() {
       }
       return;
     }
+
+    if (data.isBuzzOnly !== undefined) S.isBuzzOnly = data.isBuzzOnly;
 
     participantHideWinner();
 
@@ -1868,6 +1939,7 @@ function saveHostSession() {
   localStorage.setItem('buzzcode_session', JSON.stringify({
     role: 'host', roomCode: S.roomCode, questions: S.questions,
     buzzDelay: S.buzzDelay, qIndex: S.currentQIndex, token,
+    isBuzzOnly: S.isBuzzOnly,
   }));
 }
 function saveParticipantSession() {
@@ -1910,18 +1982,32 @@ async function tryRestoreSession() {
     }
 
     if (sess.role === 'host') {
+      S.isBuzzOnly = sess.isBuzzOnly || false;
       S.questions = (sess.questions || []).map(normaliseQuestion);
       S.buzzDelay = sess.buzzDelay || 0; S.currentQIndex = sess.qIndex ?? -1; S.isHost = true;
       document.getElementById('sidebarRoomCode').textContent = S.roomCode;
-      document.getElementById('totalQNum').textContent       = S.questions.length;
-      document.getElementById('currentQNum').textContent     = S.currentQIndex >= 0 ? S.currentQIndex + 1 : '—';
+      
+      if (S.isBuzzOnly) {
+        document.querySelector('.question-counter').style.display = 'none';
+        document.getElementById('nextQBtn').textContent = 'Open Buzzer →';
+      } else {
+        document.querySelector('.question-counter').style.display = 'block';
+        document.getElementById('totalQNum').textContent = S.questions.length;
+        document.getElementById('currentQNum').textContent = S.currentQIndex >= 0 ? S.currentQIndex + 1 : '—';
+      }
+      
       if (S.currentQIndex >= 0) {
-        const q = S.questions[S.currentQIndex];
+        const q = S.isBuzzOnly 
+          ? { title: `Round ${S.currentQIndex + 1}`, description: 'Ask your question verbally!', bodyType: 'text', body: 'Get ready to buzz!' }
+          : S.questions[S.currentQIndex];
+        
         document.getElementById('hostNoQuestion').style.display      = 'none';
         document.getElementById('hostQuestionContent').style.display = 'block';
-        document.getElementById('hostQBadge').textContent  = `Q${S.currentQIndex + 1}`;
+        document.getElementById('hostQBadge').textContent  = S.isBuzzOnly ? `Round ${S.currentQIndex + 1}` : `Q${S.currentQIndex + 1}`;
         renderQuestionInto(document.getElementById('hostQuestionDisplay'), q);
+        S.questionActive = true; // Assume active if restoring with index
       }
+      updateNextBtnText();
       update(ref(S.db, `rooms/${S.roomCode}`), { hostOnline: true });
       onDisconnect(ref(S.db, `rooms/${S.roomCode}/hostOnline`)).set(false);
       showScreen('host'); listenAsHost(); return true;
