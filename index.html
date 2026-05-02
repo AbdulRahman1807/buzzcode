@@ -804,9 +804,22 @@
     background: #00f5ff; display: inline-block; margin-right: 6px;
     animation: livePulse 1.5s ease-in-out infinite;
   }
+
   @keyframes livePulse {
     0%, 100% { opacity: 1; transform: scale(1); }
     50%       { opacity: 0.4; transform: scale(0.7); }
+  }
+
+  .btn-leave-room {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: var(--surface2); border: 1px solid var(--border);
+    color: var(--text-muted); font-size: 14px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+  }
+  .btn-leave-room:hover {
+    background: #ff404022; border-color: #ff404066; color: #ff4040;
+    transform: rotate(90deg);
   }
 </style>
 </head>
@@ -1069,6 +1082,7 @@
     <div style="display:flex;gap:12px;align-items:center;">
       <div class="my-score-badge" id="myScoreBadge">⭐ 0 pts</div>
       <div class="room-badge" id="myRoomBadge"></div>
+      <button class="btn-leave-room" onclick="leaveRoom()" title="Leave Room">✕</button>
     </div>
   </div>
 
@@ -1850,6 +1864,19 @@ window.buzz = function() {
 };
 
 window.leaveRoom = function() {
+  if (S.isHost) {
+    endSession();
+    return;
+  }
+  if (!confirm('Leave this room?')) return;
+  
+  // Explicitly remove from Firebase if we have an ID
+  if (S.myId && S.roomCode && S.db) {
+    try {
+      remove(ref(S.db, `rooms/${S.roomCode}/participants/${S.myId}`));
+    } catch(e) {}
+  }
+  
   clearSession(S.roomCode);
   location.reload();
 };
