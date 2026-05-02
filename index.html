@@ -1461,7 +1461,7 @@ function hostShowWinner(buzzer) {
 
   overlay.classList.add('visible');
 
-  const exhausted = S.currentQIndex >= S.questions.length - 1;
+  const exhausted = !S.isBuzzOnly && S.currentQIndex >= S.questions.length - 1;
   document.getElementById('nextQBtn').disabled = exhausted;
   updateNextBtnText();
 
@@ -1473,7 +1473,7 @@ function hostShowWinner(buzzer) {
 function hostHideWinner() {
   S.buzzWinnerId = null;
   document.getElementById('hostWinnerOverlay').classList.remove('visible');
-  const exhausted = S.currentQIndex >= S.questions.length - 1;
+  const exhausted = !S.isBuzzOnly && S.currentQIndex >= S.questions.length - 1;
   document.getElementById('nextQBtn').disabled = exhausted;
   updateNextBtnText();
   renderParticipantList();
@@ -1540,7 +1540,7 @@ function setRoundActive(active) {
     nextBtn.disabled = false;
   } else {
     badge.classList.remove('visible');
-    nextBtn.disabled = S.currentQIndex >= S.questions.length - 1;
+    nextBtn.disabled = !S.isBuzzOnly && S.currentQIndex >= S.questions.length - 1;
   }
   updateNextBtnText();
 }
@@ -1767,9 +1767,14 @@ window.awardPoint = function() {
   
   // 1. Award the point in DB
   DB.awardPoint(S.buzzWinnerId, currentScore);
-  
-  // 2. Reset the buzzer in DB so everyone's overlay disappears
-  DB.resetBuzzer();
+
+  // 2. Reset the buzzer and clear the question in DB so it's "Round Over"
+  update(DB.roomRef(), { 
+    buzzer: null, 
+    buzzLocked: false, 
+    currentQuestion: null,
+    roundId: null 
+  });
   
   // 3. Update local state
   if (!S.scoresCache[S.buzzWinnerId]) S.scoresCache[S.buzzWinnerId] = { points: 0 };
@@ -1778,6 +1783,7 @@ window.awardPoint = function() {
   
   S.buzzWinnerId = null;
   hostHideWinner();
+  setRoundActive(false);
 };
 
 window.endSession = function() {
@@ -1867,8 +1873,20 @@ function listenAsHost() {
         if (!S.isBuzzOnly) {
           document.getElementById('currentQNum').textContent = S.currentQIndex + 1;
         }
+      } else {
+        // No current question — show "Ready" or "Round Complete"
+        document.getElementById('hostQuestionContent').style.display = 'none';
+        const noQ = document.getElementById('hostNoQuestion');
+        noQ.style.display = 'block';
+        if (S.isBuzzOnly && S.currentQIndex >= 0) {
+          noQ.querySelector('h2').textContent = `Round ${S.currentQIndex + 1} Complete!`;
+          noQ.querySelector('p').textContent  = 'Click the button above to start the next round.';
+        } else {
+          noQ.querySelector('h2').textContent = 'Ready to Start!';
+          noQ.querySelector('p').textContent  = 'Click the button above to reveal the first question.';
+        }
       }
-    }
+    
     if (data.buzzer && S.buzzWinnerId !== data.buzzer.id) {
       hostShowWinner(data.buzzer);
     } else if (!data.buzzer && S.buzzWinnerId) {
