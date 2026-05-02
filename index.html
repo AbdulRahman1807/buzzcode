@@ -1162,18 +1162,24 @@ function normaliseQuestion(q) {
 /* ─────────────────────────────────────
    Render a Question object into an element
 ───────────────────────────────────── */
-function renderQuestionInto(container, q) {
+function renderQuestionInto(container, q, isHostView = false) {
   if (!q || !container) return;
   const norm = normaliseQuestion(q);
   let html = '';
   html += `<div class="q-title">${escHtml(norm.title)}</div>`;
-  if (norm.description) {
+  
+  // Only show host-specific descriptions if requested
+  if (norm.description && (!q.isBuzzOnlyStep || isHostView)) {
     html += `<div class="q-description">${escHtml(norm.description)}</div>`;
   }
+  
   if (norm.bodyType === 'image' && norm.body) {
     html += `<img class="q-body-image" src="${norm.body}" alt="Question image">`;
   } else {
-    html += `<div class="q-body-text">${escHtml(norm.body)}</div>`;
+    // Only show body text for non-buzz-only steps OR for participants in buzz-only
+    if (!q.isBuzzOnlyStep || !isHostView) {
+      html += `<div class="q-body-text">${escHtml(norm.body)}</div>`;
+    }
   }
   container.innerHTML = html;
 }
@@ -1714,13 +1720,19 @@ window.nextQuestion = function() {
 
   if (S.isBuzzOnly) {
     S.currentQIndex++;
-    const q = { title: `Round ${S.currentQIndex + 1}`, description: 'Ask your question verbally!', bodyType: 'text', body: 'Get ready to buzz!' };
+    const q = { 
+      title: `Round ${S.currentQIndex + 1}`, 
+      description: 'Ask your question verbally!', 
+      bodyType: 'text', 
+      body: 'Get ready to buzz!',
+      isBuzzOnlyStep: true
+    };
     DB.setQuestion(q, S.currentQIndex);
     
     document.getElementById('hostNoQuestion').style.display      = 'none';
     document.getElementById('hostQuestionContent').style.display = 'block';
     document.getElementById('hostQBadge').textContent  = `Round ${S.currentQIndex + 1}`;
-    renderQuestionInto(document.getElementById('hostQuestionDisplay'), q);
+    renderQuestionInto(document.getElementById('hostQuestionDisplay'), q, true);
     setRoundActive(true);
     saveHostSession();
     return;
@@ -1737,7 +1749,7 @@ window.nextQuestion = function() {
   document.getElementById('hostNoQuestion').style.display      = 'none';
   document.getElementById('hostQuestionContent').style.display = 'block';
   document.getElementById('hostQBadge').textContent  = `Q${next + 1}`;
-  renderQuestionInto(document.getElementById('hostQuestionDisplay'), q);
+  renderQuestionInto(document.getElementById('hostQuestionDisplay'), q, true);
   document.getElementById('currentQNum').textContent = next + 1;
   setRoundActive(true);
   saveHostSession();
@@ -1752,10 +1764,18 @@ window.resetBuzz = function() {
 window.awardPoint = function() {
   if (!S.buzzWinnerId) return;
   const currentScore = S.scoresCache[S.buzzWinnerId]?.points || 0;
+  
+  // 1. Award the point in DB
   DB.awardPoint(S.buzzWinnerId, currentScore);
+  
+  // 2. Reset the buzzer in DB so everyone's overlay disappears
+  DB.resetBuzzer();
+  
+  // 3. Update local state
   if (!S.scoresCache[S.buzzWinnerId]) S.scoresCache[S.buzzWinnerId] = { points: 0 };
   S.scoresCache[S.buzzWinnerId].points = currentScore + 1;
   renderParticipantList();
+  
   S.buzzWinnerId = null;
   hostHideWinner();
 };
@@ -1768,13 +1788,34 @@ window.endSession = function() {
   DB.endRoom().then(() => { location.reload(); });
 };
 
-window.joinParticipantSession = function() {
+window.joinParticipantSession = async function() {
   const code  = document.getElementById('participantRoomCode').value.trim().toUpperCase();
   const name  = document.getElementById('participantName').value.trim();
+  const btn   = document.querySelector('#participantSetupModal .btn-primary');
   const errEl = document.getElementById('participantError');
-  if (!code || !name) { errEl.classList.add('visible'); return; }
+  
+  if (!code || !name) { 
+    errEl.textContent = 'Please enter both a room code and your name.';
+    errEl.classList.add('visible'); 
+    return; 
+  }
+  
+  btn.disabled = true;
+  btn.textContent = 'Verifying...';
+  
+  S.roomCode = code;
+  const exists = await DB.checkRoomExists();
+  
+  if (!exists) {
+    errEl.textContent = 'Room not found. Please check the code.';
+    errEl.classList.add('visible');
+    btn.disabled = false;
+    btn.textContent = 'Join Room →';
+    return;
+  }
+
   errEl.classList.remove('visible');
-  S.roomCode = code; S.myName = name;
+  S.myName = name;
   S.myAvatar = rand(AVATARS); S.myColor = rand(COLORS);
   const savedId = localStorage.getItem(`buzzcode_pid_${code}`);
   S.myId = savedId || ('p_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7));
@@ -1822,7 +1863,7 @@ function listenAsHost() {
         document.getElementById('hostNoQuestion').style.display      = 'none';
         document.getElementById('hostQuestionContent').style.display = 'block';
         document.getElementById('hostQBadge').textContent  = S.isBuzzOnly ? `Round ${S.currentQIndex + 1}` : `Q${S.currentQIndex + 1}`;
-        renderQuestionInto(document.getElementById('hostQuestionDisplay'), q);
+        renderQuestionInto(document.getElementById('hostQuestionDisplay'), q, true);
         if (!S.isBuzzOnly) {
           document.getElementById('currentQNum').textContent = S.currentQIndex + 1;
         }
@@ -2004,7 +2045,7 @@ async function tryRestoreSession() {
         document.getElementById('hostNoQuestion').style.display      = 'none';
         document.getElementById('hostQuestionContent').style.display = 'block';
         document.getElementById('hostQBadge').textContent  = S.isBuzzOnly ? `Round ${S.currentQIndex + 1}` : `Q${S.currentQIndex + 1}`;
-        renderQuestionInto(document.getElementById('hostQuestionDisplay'), q);
+        renderQuestionInto(document.getElementById('hostQuestionDisplay'), q, true);
         S.questionActive = true; // Assume active if restoring with index
       }
       updateNextBtnText();
